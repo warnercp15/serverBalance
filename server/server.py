@@ -16,6 +16,15 @@ dataComplements={}
 dataHowLongToBeatTime = {}
 
 finalData=[]
+
+requestStack = {
+    const.METACRITIC_SOCKET_TYPE: [],
+    const.COMPLEMENTS_SOCKET_TYPE: [],
+    const.DIX_SOCKET_TYPE: [],
+    const.IKURO_SOCKET_TYPE: [],
+    const.HLTB_SOCKET_TYPE: []
+}
+
 availableSockets={
     const.METACRITIC_SOCKET_TYPE: [],
     const.COMPLEMENTS_SOCKET_TYPE: [],
@@ -70,7 +79,7 @@ def startScrape(data):
         print('--------------------- Socket ' + client + ' to complete the job.')
         socketio.emit('start-' + data[1], data[0], room=client)
     else:
-        # Fallback for no available sockets
+        requestStack[data[1]].append(data[0])
         return
 
 """ Inicia cualquier tipo de scrapping
@@ -79,10 +88,9 @@ def startScrape(data):
     existen clientes disponibles para realizar el scrape.
 
     Args:
-      game:
-        Un string con el nombre del juego a buscar
-      socketType:
-        Un string con el tipo de scrape a iniciar
+      data:
+        [0]: Un string con el nombre del juego a buscar
+        [1]: Un string con el tipo de scrape a iniciar
           [En el archivo de constantes se encuentran los tipos]
 
     Returns:
@@ -92,20 +100,47 @@ def startScrape(data):
 @socketio.on('endScrape')
 def endScrape(data):
     global availableSockets, busySockets
+    print('------------ Socket ' + request.sid + ' ended processing ' + data[0])
+
+    if data[0] == const.METACRITIC_SOCKET_TYPE:
+        if len(data) < 1:
+            dataMetacriticScore.update(data[1])
+        if len(requestStack[const.METACRITIC_SOCKET_TYPE]) > 0:
+            print('------------ Theres processes in queue for ' + data[0] + ', socket ' + request.sid + ' will continue with next in queue ')
+            socketio.emit('start-' + data[0], requestStack[const.METACRITIC_SOCKET_TYPE].pop(), room=request.sid)
+            return
+    elif data[0] == const.COMPLEMENTS_SOCKET_TYPE:
+        if len(data) < 1:
+            dataComplements.update(data[1])
+        if len(requestStack[const.COMPLEMENTS_SOCKET_TYPE]) > 0:
+            print('------------ Theres processes in queue for ' + data[0] + ', socket ' + request.sid + ' will continue with next in queue ')
+            socketio.emit('start-' + data[0], requestStack[const.COMPLEMENTS_SOCKET_TYPE].pop(), room=request.sid)
+            return
+    elif data[0] == const.DIX_SOCKET_TYPE:
+        if len(data) < 1:
+            dataDixGamerPrice.update(data[1])
+        if len(requestStack[const.DIX_SOCKET_TYPE]) > 0:
+            print('------------ Theres processes in queue for ' + data[0] + ', socket ' + request.sid + ' will continue with next in queue ')
+            socketio.emit('start-' + data[0], requestStack[const.DIX_SOCKET_TYPE].pop(), room=request.sid)
+            return
+    elif data[0] == const.IKURO_SOCKET_TYPE:
+        if len(data) < 1:
+            dataIkuroGamePrice.update(data[1])
+        if len(requestStack[const.IKURO_SOCKET_TYPE]) > 0:
+            print('------------ Theres processes in queue for ' + data[0] + ', socket ' + request.sid + ' will continue with next in queue ')
+            socketio.emit('start-' + data[0], requestStack[const.IKURO_SOCKET_TYPE].pop(), room=request.sid)
+            return
+    elif data[0] == const.HLTB_SOCKET_TYPE:
+        if len(data) < 1:
+            dataHowLongToBeatTime.update(data[1])
+        if len(requestStack[const.HLTB_SOCKET_TYPE]) > 0:
+            print('------------ Theres processes in queue for ' + data[0] + ', socket ' + request.sid + ' will continue with next in queue ')
+            socketio.emit('start-' + data[0], requestStack[const.HLTB_SOCKET_TYPE].pop(), room=request.sid)
+            return
+
+    print('-------- No more requests in queue')
     busySockets[data[0]].remove(request.sid)
     availableSockets[data[0]].append(request.sid)
-    
-    if len(data) < 1:
-        if data[0] == const.METACRITIC_SOCKET_TYPE:
-            dataMetacriticScore.update(data[1])
-        if data[0] == const.COMPLEMENTS_SOCKET_TYPE:
-            dataComplements.update(data[1])
-        if data[0] == const.DIX_SOCKET_TYPE:
-            dataDixGamerPrice.update(data[1])
-        if data[0] == const.IKURO_SOCKET_TYPE:
-            dataIkuroGamePrice.update(data[1])
-        if data[0] == const.HLTB_SOCKET_TYPE:
-            dataHowLongToBeatTime.update(data[1])
 
 """ Notifica al servidor que un cliente termino el scrapping
 
