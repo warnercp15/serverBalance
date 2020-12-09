@@ -7,6 +7,7 @@ ruta=os.path.join(os.path.dirname(__file__), "..\\modulos\\ikuroGamesPrices\\iku
 #ejecutar el proyecto para tener el exe mas actualizado en caso de que hayan cambios
 
 def tarea(args):
+    print('Iniciando tarea con ' + args.replace(" ","-"))
     global ruta
     params=args.replace(" ","-")  #por si el nombre lleva espacios no lo entienda como mas de un parametro, en c# se acomoda!
     process = subprocess.Popen(ruta+" "+params, shell=True)  #inicia proceso, se ejecuta en esta misma consola

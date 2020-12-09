@@ -8,12 +8,11 @@ app.config['SECRET_KEY'] = '12345'
 socketio = SocketIO(app, cors_allowed_origins="*", async_mode='eventlet')
 
 
-
-dataMetacriticScore={}
-dataDixGamerPrice={}
-dataIkuroGamePrice={}
-dataComplements={}
-dataHowLongToBeatTime = {}
+dataMetacriticScore=[]
+dataDixGamerPrice=[]
+dataIkuroGamePrice=[]
+dataComplements=[]
+dataHowLongToBeatTime=[]
 
 finalData=[]
 
@@ -74,7 +73,7 @@ def startScrape(data):
     print('----------- Starting Scrape with ' + str(data))
     global availableSockets, busySockets
     if len(availableSockets[data[1]]) > 0:
-        client = availableSockets[data[1]].pop()
+        client = availableSockets[data[1]].pop(0)
         busySockets[data[1]].append(client)
         print('--------------------- Socket ' + client + ' to complete the job.')
         socketio.emit('start-' + data[1], data[0], room=client)
@@ -107,35 +106,35 @@ def endScrape(data):
             dataMetacriticScore.update(data[1])
         if len(requestStack[const.METACRITIC_SOCKET_TYPE]) > 0:
             print('------------ Theres processes in queue for ' + data[0] + ', socket ' + request.sid + ' will continue with next in queue ')
-            socketio.emit('start-' + data[0], requestStack[const.METACRITIC_SOCKET_TYPE].pop(), room=request.sid)
+            socketio.emit('start-' + data[0], requestStack[const.METACRITIC_SOCKET_TYPE].pop(0), room=request.sid)
             return
     elif data[0] == const.COMPLEMENTS_SOCKET_TYPE:
         if len(data) < 1:
             dataComplements.update(data[1])
         if len(requestStack[const.COMPLEMENTS_SOCKET_TYPE]) > 0:
             print('------------ Theres processes in queue for ' + data[0] + ', socket ' + request.sid + ' will continue with next in queue ')
-            socketio.emit('start-' + data[0], requestStack[const.COMPLEMENTS_SOCKET_TYPE].pop(), room=request.sid)
+            socketio.emit('start-' + data[0], requestStack[const.COMPLEMENTS_SOCKET_TYPE].pop(0), room=request.sid)
             return
     elif data[0] == const.DIX_SOCKET_TYPE:
         if len(data) < 1:
             dataDixGamerPrice.update(data[1])
         if len(requestStack[const.DIX_SOCKET_TYPE]) > 0:
             print('------------ Theres processes in queue for ' + data[0] + ', socket ' + request.sid + ' will continue with next in queue ')
-            socketio.emit('start-' + data[0], requestStack[const.DIX_SOCKET_TYPE].pop(), room=request.sid)
+            socketio.emit('start-' + data[0], requestStack[const.DIX_SOCKET_TYPE].pop(0), room=request.sid)
             return
     elif data[0] == const.IKURO_SOCKET_TYPE:
         if len(data) < 1:
             dataIkuroGamePrice.update(data[1])
         if len(requestStack[const.IKURO_SOCKET_TYPE]) > 0:
             print('------------ Theres processes in queue for ' + data[0] + ', socket ' + request.sid + ' will continue with next in queue ')
-            socketio.emit('start-' + data[0], requestStack[const.IKURO_SOCKET_TYPE].pop(), room=request.sid)
+            socketio.emit('start-' + data[0], requestStack[const.IKURO_SOCKET_TYPE].pop(0), room=request.sid)
             return
     elif data[0] == const.HLTB_SOCKET_TYPE:
         if len(data) < 1:
             dataHowLongToBeatTime.update(data[1])
         if len(requestStack[const.HLTB_SOCKET_TYPE]) > 0:
             print('------------ Theres processes in queue for ' + data[0] + ', socket ' + request.sid + ' will continue with next in queue ')
-            socketio.emit('start-' + data[0], requestStack[const.HLTB_SOCKET_TYPE].pop(), room=request.sid)
+            socketio.emit('start-' + data[0], requestStack[const.HLTB_SOCKET_TYPE].pop(0), room=request.sid)
             return
 
     print('-------- No more requests in queue')
@@ -164,11 +163,26 @@ def endScrape(data):
 
 @app.route('/setData' , methods=['GET'])  #endpoint que recibe la data de el app de c#
 def setData():
+    # Reset data
+    dataMetacriticScore=[]
+    dataDixGamerPrice=[]
+    dataIkuroGamePrice=[]
+    dataComplements=[]
+    dataHowLongToBeatTime=[]
+
+    requestStack = {
+        const.METACRITIC_SOCKET_TYPE: [],
+        const.COMPLEMENTS_SOCKET_TYPE: [],
+        const.DIX_SOCKET_TYPE: [],
+        const.IKURO_SOCKET_TYPE: [],
+        const.HLTB_SOCKET_TYPE: []
+    }
+
     for game in const.GAMES:
-        startScrape((game, const.METACRITIC_SOCKET_TYPE))
+        # startScrape((game, const.METACRITIC_SOCKET_TYPE))
         # startScrape((game, const.COMPLEMENTS_SOCKET_TYPE))
         # startScrape((game, const.DIX_SOCKET_TYPE))
-        # startScrape((game, const.IKURO_SOCKET_TYPE))
+        startScrape((game, const.IKURO_SOCKET_TYPE))
         # startScrape((game, const.HLTB_SOCKET_TYPE))
 
 @app.route('/getData' , methods=['GET'])  # endpoint que da la data al frontend
@@ -182,7 +196,7 @@ def getData():
 @app.route('/setMetacritic' , methods=['POST'])  #endpoint que recibe la data de el app de c#
 def setMetacritic():
     global dataMetacriticScore
-    dataMetacriticScore.update(request.json)
+    dataMetacriticScore.append(request.json['data'])
     return jsonify({"status": "finalizada"})
 
 @app.route('/getMetacritic' , methods=['GET'])  # endpoint que da la data si es que hay
@@ -205,16 +219,18 @@ def getMetacriticGame(game=None):
 @app.route('/setDixGamerPrice' , methods=['POST'])  #endpoint que recibe la data de el app de c#
 def setDixGamerPrice():
     global dataDixGamerPrice
-    dataDixGamerPrice.update(request.json)
+    dataDixGamerPrice.append(request.json['data'])
     return jsonify({"status": "finalizada"})
 
-@app.route('/getDixGamerPrice/<game>' , methods=['GET'])  # endpoint que da la data si es que hay
-def getDixGamerPrice(game=None):
+@app.route('/getDixGamerPrice' , methods=['GET'])  # endpoint que da la data si es que hay
+def getDixGamerPrice():
     global dataDixGamerPrice
-    if game == None:
-        return jsonify({"data": dataDixGamerPrice})
-    else:
-        return jsonify({"data": dataDixGamerPrice[game]})
+    return jsonify({"data": dataDixGamerPrice})
+
+@app.route('/getDixGamerPrice/<game>' , methods=['GET'])  # endpoint que da la data si es que hay
+def getDixGamerPriceGame(game=None):
+    global dataDixGamerPrice
+    return jsonify({"data": dataDixGamerPrice[game]})
 
 ############################################################################################################################################################
 
@@ -225,16 +241,18 @@ def getDixGamerPrice(game=None):
 @app.route('/setIkuroGamePrice' , methods=['POST'])  #endpoint que recibe la data de el app de c#
 def setIkuroGamePrice():
     global dataIkuroGamePrice
-    dataIkuroGamePrice.update(request.json)
+    dataIkuroGamePrice.append(request.json['data'])
     return jsonify({"status": "finalizada"})
 
-@app.route('/getIkuroGamePrice/<game>' , methods=['GET'])  # endpoint que da la data si es que hay
-def getIkuroGamePrice(game):
+@app.route('/getIkuroGamePrice' , methods=['GET'])  # endpoint que da la data si es que hay
+def getIkuroGamePrice():
     global dataIkuroGamePrice
-    if game == None:
-        return jsonify({"data": dataIkuroGamePrice})
-    else:
-        return jsonify({"data": dataIkuroGamePrice[game]})
+    return jsonify({"data": dataIkuroGamePrice})
+
+@app.route('/getIkuroGamePrice/<game>' , methods=['GET'])  # endpoint que da la data si es que hay
+def getIkuroGamePriceGame(game):
+    global dataIkuroGamePrice
+    return jsonify({"data": dataIkuroGamePrice[game]})
 
 
 ############################################################################################################################################################
@@ -244,16 +262,18 @@ def getIkuroGamePrice(game):
 @app.route('/setComplements' , methods=['POST'])  #endpoint que recibe la data de el app de c#
 def setComplements():
     global dataComplements
-    dataComplements.update(request.json)
+    dataComplements.append(request.json['data'])
     return jsonify({"status": "finalizada"})
 
-@app.route('/getComplements/<game>' , methods=['GET'])  # endpoint que da la data si es que hay
-def getComplements(game):
+@app.route('/getComplements' , methods=['GET'])  # endpoint que da la data si es que hay
+def getComplements():
     global dataComplements
-    if game == None:
-        return jsonify({"data": dataComplements})
-    else:
-        return jsonify({"data": dataComplements[game]})
+    return jsonify({"data": dataComplements})
+
+@app.route('/getComplements/<game>' , methods=['GET'])  # endpoint que da la data si es que hay
+def getComplementsGame(game):
+    global dataComplements
+    return jsonify({"data": dataComplements[game]})
 
 
 ############################################################################################################################################################
@@ -266,16 +286,18 @@ def getComplements(game):
 @app.route('/setHowLongToBeatTime' , methods=['POST'])  #endpoint que recibe la data de el app de c#
 def setHowLongToBeatTime():
     global dataHowLongToBeatTime
-    dataHowLongToBeatTime.update(request.json)
+    dataHowLongToBeatTime.append(request.json['data'])
     return jsonify({"status": "finalizada"})
 
-@app.route('/getHowLongToBeatTime/<game>' , methods=['GET'])  # endpoint que da la data si es que hay
-def getHowLongToBeatTime(game):
+@app.route('/getHowLongToBeatTime' , methods=['GET'])  # endpoint que da la data si es que hay
+def getHowLongToBeatTime():
     global dataHowLongToBeatTime
-    if game == None:
-        return jsonify({"data": dataHowLongToBeatTime})
-    else:
-        return jsonify({"data": dataHowLongToBeatTime[game]})
+    return jsonify({"data": dataHowLongToBeatTime})
+
+@app.route('/getHowLongToBeatTime/<game>' , methods=['GET'])  # endpoint que da la data si es que hay
+def getHowLongToBeatTimeGame(game):
+    global dataHowLongToBeatTime
+    return jsonify({"data": dataHowLongToBeatTime[game]})
 
 
 ############################################################################################################################################################

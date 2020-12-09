@@ -32,6 +32,7 @@ def tarea(args):
     global name
     print("Proceso HowLongToBeat")
     try:
+        print('Iniciando tarea con ' + args.replace(" ","-"))
         name=args
         results = HowLongToBeat(0).search(args)
         result = max(results, key=lambda element: element.similarity).gameplay_main
