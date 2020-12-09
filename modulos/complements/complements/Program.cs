@@ -49,11 +49,7 @@ namespace complements
 
             string imgGame = getImage(game);
 
-            var data = JsonConvert.SerializeObject(new
-            {
-                name=game,
-                image= imgGame
-            });
+            Complement data = new Complement(game, imgGame);
             
             var json = JsonConvert.SerializeObject(new
             {

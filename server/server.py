@@ -1,3 +1,5 @@
+import json
+
 from flask import Flask,request,jsonify
 from flask_socketio import SocketIO,emit
 
@@ -20,6 +22,85 @@ dataHowLongToBeatTime = None
 
 finalData=[]
 
+listComplement=[]
+listDixGamerPrice=[]
+listIkuroGamePrice=[]
+listHowLongToBeatTime=[]
+listMetacriticScore=[]
+listNames=[]
+
+
+'''
+La idea es que existe para cada tipo de modulo una lista
+y tambien una lista de nombres, cada vez que un modulo termine una tarea, anade el nombre del juego que termino
+para despues recorrer esa lista de nombre que es mas liviana y verificar si estan los 5 nombres de cada juego,
+si estan procede a armar la data y anadirla a la lista y emitir la lista con la data nueva
+'''
+
+def haveAllData(name):
+    global listComplement,listDixGamerPrice,listIkuroGamePrice,listHowLongToBeatTime,listMetacriticScore,listNames
+
+    #cuando encuentre el nombre 5 veces quiere decir que tiene todos los datos
+    resNames = [x for x in listNames if x == name]  #se creo un lista con los nombres porque es mas rapido que recorrer que con los objetos
+
+    if len(resNames)==5:
+        resComplement=[x for x in listComplement if x["name"]== name]
+        resDixGamerPrice=[x for x in listDixGamerPrice if x["name"]== name]
+        resIkuroGamePrice=[x for x in listIkuroGamePrice if x["name"]== name]
+        resHowLongToBeatTime=[x for x in listHowLongToBeatTime if x["name"]== name]
+        resMetacriticScore=[x for x in listMetacriticScore if x["name"]== name]
+
+        print()
+        print(len(resComplement))
+        print(len(resDixGamerPrice))
+        print(len(resIkuroGamePrice))
+        print(len(resHowLongToBeatTime))
+        print(len(resMetacriticScore))
+        #imprime 1 por cada lista, porque ya sabemos que estan los 5 datos
+
+
+        #empieza a armar la data
+
+        n1=resDixGamerPrice[0]["price"]
+        n2=resIkuroGamePrice[0]["price"]
+        precio=""
+        offer=False
+
+        #acomoda los precios, si n1 es negativo es que hay oferta
+        if float(n1)<0:
+            offer=True
+
+            if float(n1*-1)<float(n2):
+                precio = "oferta: $" + str(float(n1* -1)) + "-$" + str(n2)
+
+            elif float(n1*-1)==float(n2):
+                precio = "oferta: $" + str(n2)
+
+            else:
+                precio = "oferta: $" + str(n2) + "-$" + str(float(n1 * -1))
+        else:
+
+            if float(n1)<float(n2):
+                precio = "$" + str(n1) + "-$" + str(n2)
+
+            elif float(n1*-1)==float(n2):
+                precio = "$" + str(n2)
+
+            else:
+                precio = "$" + str(n2) + "-$" + str(n1)
+
+        jsonData={
+            "offer":offer,
+            "name":name,
+            "imageUrl":resComplement[0]["image"],
+            "price":precio,
+            "score":resMetacriticScore[0]["score"],
+            "timeToBeat":resHowLongToBeatTime[0]["time"]+"h"
+        }
+
+        finalData.append(jsonData) #lo agrega a la lista de juegos que va a consultar el frontend
+        emit('onNewData', finalData,broadcast=True)  #emite nuevo juego
+
 @app.route('/')
 def index():
     return "Hola soy el server principal"
@@ -27,12 +108,9 @@ def index():
 ############################################################################################################################################################
 # Data para en frontend, se supone que el cliente principal va a armar todo y mandarlo a este endpoint
 
-@app.route('/setData' , methods=['POST'])  #endpoint que recibe la data de el app de c#
-def setData():
-    global finalData
-    finalData = request.json
-    print(finalData)
-    return jsonify({"status": "ok"})
+@socketio.on('addGame')  #evento agrega los datos de un juego
+def addGame(data):
+    finalData.append(data)
 
 @app.route('/getData' , methods=['GET'])  # endpoint que da la data al frontend
 def getData():
@@ -46,6 +124,7 @@ def getData():
 def setMetacritic():
     global dataMetacriticScore
     dataMetacriticScore = request.json
+    listMetacriticScore.append(dataMetacriticScore["data"])  #se anade la data obtenida a la lista correspondiente
     return jsonify({"status": "finalizada"})
 
 @app.route('/getMetacritic' , methods=['GET'])  # endpoint que da la data si es que hay
@@ -60,16 +139,16 @@ def getMetacritic():
 def connectMetacriticScore(data):
     global tareaMetacriticScoreTerminada
     tareaMetacriticScoreTerminada = False
-    print(request.sid)
     emit('onMetacriticScore',data,broadcast=True) #Activa el evento para que el cliente/modulo haga la tarea
     # broadcast es para que emita a todos, porque si no solo emite al ultmimo que conecto
 
 @socketio.on('finMetacriticScore')  #Evento que usa el cliente/modulo para decir que termino la tarea
-def finMetacriticScore():
+def finMetacriticScore(name):
     global tareaMetacriticScoreTerminada,dataMetacriticScore
     tareaMetacriticScoreTerminada = True
-    emit('onFinishMetacriticScore',dataMetacriticScore,broadcast=True)
-
+    listNames.append(name)  #se termino tarea, agrego nombre
+    haveAllData(name)  #verifico si tengo todos los datos para armar la data y actualizar
+    #emit('onFinishMetacriticScore',dataMetacriticScore,broadcast=True)
 ############################################################################################################################################################
 
 
@@ -81,6 +160,7 @@ def finMetacriticScore():
 def setDixGamerPrice():
     global dataDixGamerPrice
     dataDixGamerPrice = request.json
+    listDixGamerPrice.append(dataDixGamerPrice["data"]) #se anade la data obtenida a la lista correspondiente
     return jsonify({"status": "finalizada"})
 
 @app.route('/getDixGamerPrice' , methods=['GET'])  # endpoint que da la data si es que hay
@@ -95,15 +175,16 @@ def getDixGamerPrice():
 def connectDixGamerPrice(data):
     global tareaDixGamerPriceTerminada
     tareaDixGamerPriceTerminada = False
-    print(request.sid)
     emit('onDixGamerPrice',data,broadcast=True) #Activa el evento para que el cliente/modulo haga la tarea
     # broadcast es para que emita a todos, porque si no solo emite al ultmimo que conecto
 
 @socketio.on('finDixGamerPrice')  #Evento que usa el cliente/modulo para decir que termino la tarea
-def finDixGamerPrice():
+def finDixGamerPrice(name):
     global tareaDixGamerPriceTerminada,dataDixGamerPrice
     tareaDixGamerPriceTerminada = True
-    emit('onFinishDixGamerPrice',dataDixGamerPrice,broadcast=True)
+    listNames.append(name)  # se termino tarea, agrego nombre
+    haveAllData(name)  # verifico si tengo todos los datos para armar la data y actualizar
+    #emit('onFinishDixGamerPrice',dataDixGamerPrice,broadcast=True)
 
 ############################################################################################################################################################
 
@@ -115,6 +196,7 @@ def finDixGamerPrice():
 def setIkuroGamePrice():
     global dataIkuroGamePrice
     dataIkuroGamePrice = request.json
+    listIkuroGamePrice.append(dataIkuroGamePrice["data"])  #se anade la data obtenida a la lista correspondiente
     return jsonify({"status": "finalizada"})
 
 @app.route('/getIkuroGamePrice' , methods=['GET'])  # endpoint que da la data si es que hay
@@ -129,15 +211,16 @@ def getIkuroGamePrice():
 def connectIkuroGamePrice(data):
     global tareaIkuroGamePriceTerminada
     tareaIkuroGamePriceTerminada = False
-    print(request.sid)
     emit('onIkuroGamePrice', data, broadcast=True)  # Activa el evento para que el cliente/modulo haga la tarea
     # broadcast es para que emita a todos, porque si no solo emite al ultmimo que conecto
 
 @socketio.on('finIkuroGamePrice')  # Evento que usa el cliente/modulo para decir que termino la tarea
-def finIkuroGamePrice():
+def finIkuroGamePrice(name):
     global tareaIkuroGamePriceTerminada, dataIkuroGamePrice
     tareaIkuroGamePriceTerminada = True
-    emit('onFinishIkuroGamePrice',dataIkuroGamePrice,broadcast=True)
+    listNames.append(name)  # se termino tarea, agrego nombre
+    haveAllData(name)  # verifico si tengo todos los datos para armar la data y actualizar
+    #emit('onFinishIkuroGamePrice',dataIkuroGamePrice,broadcast=True)
 
 ############################################################################################################################################################
 
@@ -148,6 +231,7 @@ def finIkuroGamePrice():
 def setComplements():
     global dataComplements
     dataComplements = request.json
+    listComplement.append(dataComplements["data"])  #se anade la data obtenida a la lista correspondiente
     return jsonify({"status": "finalizada"})
 
 @app.route('/getComplements' , methods=['GET'])  # endpoint que da la data si es que hay
@@ -162,15 +246,16 @@ def getComplements():
 def connectComplements(data):
     global tareaComplements
     tareaComplements = False
-    print(request.sid)
     emit('onComplements', data, broadcast=True)  # Activa el evento para que el cliente/modulo haga la tarea
     # broadcast es para que emita a todos, porque si no solo emite al ultmimo que conecto
 
 @socketio.on('finComplements')  # Evento que usa el cliente/modulo para decir que termino la tarea
-def finComplements():
+def finComplements(name):
     global tareaComplements, dataComplements
     tareaComplements = True
-    emit('onFinishComplements',dataComplements,broadcast=True)
+    listNames.append(name)  # se termino tarea, agrego nombre
+    haveAllData(name)  # verifico si tengo todos los datos para armar la data y actualizar
+    #emit('onFinishComplements',dataComplements,broadcast=True)
 
 ############################################################################################################################################################
 
@@ -191,16 +276,17 @@ def getHowLongToBeatTime():
 def connectHowLongToBeatTime(data):
     global tareaHowLongToBeatTimeTerminada
     tareaHowLongToBeatTimeTerminada = False
-    print(request.sid)
     emit('onHowLongToBeatTime', data,broadcast=True)  # Activa el evento para que el cliente/modulo haga la tarea
     # broadcast es para que emita a todos, porque si no solo emite al ultmimo que conecto
 
 @socketio.on('finHowLongToBeatTime')  # Evento que usa el cliente/modulo para decir que termino la tarea
 def finHowLongToBeatTime(data):  #trae la data aca, no es necesario el endpoint setHowLongToBeatTime
     global tareaHowLongToBeatTimeTerminada, dataHowLongToBeatTime
-    dataHowLongToBeatTime=data
+    dataHowLongToBeatTime=data["data"]
     tareaHowLongToBeatTimeTerminada = True
-    emit('onFinishHowLongToBeatTime',dataHowLongToBeatTime,broadcast=True)
+    listHowLongToBeatTime.append(dataHowLongToBeatTime)  #se anade la data obtenida a la lista correspondiente
+    listNames.append(dataHowLongToBeatTime["name"])  # se termino tarea, agrego nombre
+    haveAllData(dataHowLongToBeatTime["name"])    #verifico si tengo todos los datos para armar la data y actualizar
 ############################################################################################################################################################
 
 
