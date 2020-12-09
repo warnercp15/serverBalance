@@ -28,8 +28,9 @@ def finishMetacriticScore(data):
 
 cantData=0   #son 5 datas
 
-socketIO = SocketIO("http://localhost",5000) #se conecta al server
-#socketIO = SocketIO('http://warnercp15.pythonanywhere.com') #se conecta al server
+print('Iniciando eventos')
+# socketIO = SocketIO("http://localhost",5000) #se conecta al server
+socketIO = SocketIO('http://invokeee.pythonanywhere.com') #se conecta al server
 
 socketIO.on('onFinishComplements', finishComplements)  # define que hacer cuando se actice el evento
 socketIO.on('onFinishDixGamerPrice', finishDixGamerPrice)  # define que hacer cuando se actice el evento
@@ -44,4 +45,5 @@ for game in listaJuegos:
     socketIO.emit('connectIkuroGamePrice', game)  # activa el evento y le manda el primer juego de la lista
     socketIO.emit('connectMetacriticScore', game)  # activa el evento y le manda el primer juego de la lista
 socketIO.wait()
+print('Emitiendo')
 #resp = requests.get('https://warnercp15.pythonanywhere.com/getHowLongToBeatTime',timeout=5) #maximo que dura 5 segundos, sino ver que hacer

@@ -1,3 +1,4 @@
+import const
 from flask import Flask,request,jsonify
 from flask_socketio import SocketIO,emit
 
@@ -6,33 +7,134 @@ app.config['SECRET_KEY'] = '12345'
 #socketio = SocketIO(app)
 socketio = SocketIO(app, cors_allowed_origins="*", async_mode='eventlet')
 
-tareaMetacriticScoreTerminada=False
-tareaDixGamerPriceTerminada=False
-tareaIkuroGamePriceTerminada=False
-tareaComplements=False
-tareaHowLongToBeatTimeTerminada = False
 
-dataMetacriticScore=None
-dataDixGamerPrice=None
-dataIkuroGamePrice=None
-dataComplements=None
-dataHowLongToBeatTime = None
+
+dataMetacriticScore={}
+dataDixGamerPrice={}
+dataIkuroGamePrice={}
+dataComplements={}
+dataHowLongToBeatTime = {}
 
 finalData=[]
+availableSockets={
+    const.METACRITIC_SOCKET_TYPE: [],
+    const.COMPLEMENTS_SOCKET_TYPE: [],
+    const.DIX_SOCKET_TYPE: [],
+    const.IKURO_SOCKET_TYPE: [],
+    const.HLTB_SOCKET_TYPE: []
+}
+
+busySockets={
+    const.METACRITIC_SOCKET_TYPE: [],
+    const.COMPLEMENTS_SOCKET_TYPE: [],
+    const.DIX_SOCKET_TYPE: [],
+    const.IKURO_SOCKET_TYPE: [],
+    const.HLTB_SOCKET_TYPE: []
+}
 
 @app.route('/')
 def index():
     return "Hola soy el server principal"
 
 ############################################################################################################################################################
+# Manejo de sockets
+
+@socketio.on('connect-socket')  #evento que activa el cliente/modulo para conectarse
+def connect(socketType):
+    global availableSockets
+    availableSockets[socketType].append(request.sid)
+    print(availableSockets)
+    print('> Socket ' + request.sid + ' added to ' + socketType + ' queue.')
+
+""" Inserta el socket en la cola correspondiente
+
+    Se encarga de notificar al servidor que hay un nuevo nodo conectado 
+    y lo inserta en la cola al que corresponde
+
+    Args:
+      socketType:
+        Un string con el tipo de socket que se conecto
+          [En el archivo de constantes se encuentran los tipos]
+
+    Returns:
+      Nada
+    """
+
+@socketio.on('startScrape')  
+def startScrape(data):
+    print('----------- Starting Scrape with ' + str(data))
+    global availableSockets, busySockets
+    if len(availableSockets[data[1]]) > 0:
+        client = availableSockets[data[1]].pop()
+        busySockets[data[1]].append(client)
+        print('--------------------- Socket ' + client + ' to complete the job.')
+        socketio.emit('start-' + data[1], data[0], room=client)
+    else:
+        # Fallback for no available sockets
+        return
+
+""" Inicia cualquier tipo de scrapping
+
+    Segun el socketType, se encarga de iniciar el scrapping si 
+    existen clientes disponibles para realizar el scrape.
+
+    Args:
+      game:
+        Un string con el nombre del juego a buscar
+      socketType:
+        Un string con el tipo de scrape a iniciar
+          [En el archivo de constantes se encuentran los tipos]
+
+    Returns:
+      Nada
+    """
+
+@socketio.on('endScrape')
+def endScrape(data):
+    global availableSockets, busySockets
+    busySockets[data[0]].remove(request.sid)
+    availableSockets[data[0]].append(request.sid)
+    
+    if len(data) < 1:
+        if data[0] == const.METACRITIC_SOCKET_TYPE:
+            dataMetacriticScore.update(data[1])
+        if data[0] == const.COMPLEMENTS_SOCKET_TYPE:
+            dataComplements.update(data[1])
+        if data[0] == const.DIX_SOCKET_TYPE:
+            dataDixGamerPrice.update(data[1])
+        if data[0] == const.IKURO_SOCKET_TYPE:
+            dataIkuroGamePrice.update(data[1])
+        if data[0] == const.HLTB_SOCKET_TYPE:
+            dataHowLongToBeatTime.update(data[1])
+
+""" Notifica al servidor que un cliente termino el scrapping
+
+    Se encarga de avisar devolver al servidor los datos
+    obtenidos del scrapping, asi como notificar que se encuentra
+    disponible para realizar tareas de nuevo
+
+    Args:
+      data:
+        Un objeto con los datos del scrape
+      socketType:
+        Un string con el tipo de scrape que realizó
+          [En el archivo de constantes se encuentran los tipos]
+
+    Returns:
+      Nada
+    """
+
+############################################################################################################################################################
 # Data para en frontend, se supone que el cliente principal va a armar todo y mandarlo a este endpoint
 
-@app.route('/setData' , methods=['POST'])  #endpoint que recibe la data de el app de c#
+@app.route('/setData' , methods=['GET'])  #endpoint que recibe la data de el app de c#
 def setData():
-    global finalData
-    finalData = request.json
-    print(finalData)
-    return jsonify({"status": "ok"})
+    for game in const.GAMES:
+        startScrape((game, const.METACRITIC_SOCKET_TYPE))
+        # startScrape((game, const.COMPLEMENTS_SOCKET_TYPE))
+        # startScrape((game, const.DIX_SOCKET_TYPE))
+        # startScrape((game, const.IKURO_SOCKET_TYPE))
+        # startScrape((game, const.HLTB_SOCKET_TYPE))
 
 @app.route('/getData' , methods=['GET'])  # endpoint que da la data al frontend
 def getData():
@@ -45,30 +147,18 @@ def getData():
 @app.route('/setMetacritic' , methods=['POST'])  #endpoint que recibe la data de el app de c#
 def setMetacritic():
     global dataMetacriticScore
-    dataMetacriticScore = request.json
+    dataMetacriticScore.update(request.json)
     return jsonify({"status": "finalizada"})
 
 @app.route('/getMetacritic' , methods=['GET'])  # endpoint que da la data si es que hay
 def getMetacritic():
-    global tareaMetacriticScoreTerminada,dataMetacriticScore
-    if tareaMetacriticScoreTerminada==True:
-        return jsonify({"data": dataMetacriticScore})
-    else:
-        return jsonify({"status": "enProceso"})
+    global dataMetacriticScore
+    return jsonify({"data": dataMetacriticScore})
 
-@socketio.on('connectMetacriticScore')  #evento que activa el cliente/modulo para conectarse
-def connectMetacriticScore(data):
-    global tareaMetacriticScoreTerminada
-    tareaMetacriticScoreTerminada = False
-    print(request.sid)
-    emit('onMetacriticScore',data,broadcast=True) #Activa el evento para que el cliente/modulo haga la tarea
-    # broadcast es para que emita a todos, porque si no solo emite al ultmimo que conecto
-
-@socketio.on('finMetacriticScore')  #Evento que usa el cliente/modulo para decir que termino la tarea
-def finMetacriticScore():
-    global tareaMetacriticScoreTerminada,dataMetacriticScore
-    tareaMetacriticScoreTerminada = True
-    emit('onFinishMetacriticScore',dataMetacriticScore,broadcast=True)
+@app.route('/getMetacritic/<game>' , methods=['GET'])  # endpoint que da la data si es que hay
+def getMetacriticGame(game=None):
+    global dataMetacriticScore
+    return jsonify({"data": dataMetacriticScore[game]})
 
 ############################################################################################################################################################
 
@@ -80,30 +170,16 @@ def finMetacriticScore():
 @app.route('/setDixGamerPrice' , methods=['POST'])  #endpoint que recibe la data de el app de c#
 def setDixGamerPrice():
     global dataDixGamerPrice
-    dataDixGamerPrice = request.json
+    dataDixGamerPrice.update(request.json)
     return jsonify({"status": "finalizada"})
 
-@app.route('/getDixGamerPrice' , methods=['GET'])  # endpoint que da la data si es que hay
-def getDixGamerPrice():
-    global tareaDixGamerPriceTerminada,dataDixGamerPrice
-    if tareaDixGamerPriceTerminada==True:
+@app.route('/getDixGamerPrice/<game>' , methods=['GET'])  # endpoint que da la data si es que hay
+def getDixGamerPrice(game=None):
+    global dataDixGamerPrice
+    if game == None:
         return jsonify({"data": dataDixGamerPrice})
     else:
-        return jsonify({"data": "enProceso"})
-
-@socketio.on('connectDixGamerPrice')  #evento que activa el cliente/modulo para conectarse
-def connectDixGamerPrice(data):
-    global tareaDixGamerPriceTerminada
-    tareaDixGamerPriceTerminada = False
-    print(request.sid)
-    emit('onDixGamerPrice',data,broadcast=True) #Activa el evento para que el cliente/modulo haga la tarea
-    # broadcast es para que emita a todos, porque si no solo emite al ultmimo que conecto
-
-@socketio.on('finDixGamerPrice')  #Evento que usa el cliente/modulo para decir que termino la tarea
-def finDixGamerPrice():
-    global tareaDixGamerPriceTerminada,dataDixGamerPrice
-    tareaDixGamerPriceTerminada = True
-    emit('onFinishDixGamerPrice',dataDixGamerPrice,broadcast=True)
+        return jsonify({"data": dataDixGamerPrice[game]})
 
 ############################################################################################################################################################
 
@@ -114,63 +190,36 @@ def finDixGamerPrice():
 @app.route('/setIkuroGamePrice' , methods=['POST'])  #endpoint que recibe la data de el app de c#
 def setIkuroGamePrice():
     global dataIkuroGamePrice
-    dataIkuroGamePrice = request.json
+    dataIkuroGamePrice.update(request.json)
     return jsonify({"status": "finalizada"})
 
-@app.route('/getIkuroGamePrice' , methods=['GET'])  # endpoint que da la data si es que hay
-def getIkuroGamePrice():
-    global tareaIkuroGamePriceTerminada,dataIkuroGamePrice
-    if tareaIkuroGamePriceTerminada==True:
+@app.route('/getIkuroGamePrice/<game>' , methods=['GET'])  # endpoint que da la data si es que hay
+def getIkuroGamePrice(game):
+    global dataIkuroGamePrice
+    if game == None:
         return jsonify({"data": dataIkuroGamePrice})
     else:
-        return jsonify({"data": "enProceso"})
+        return jsonify({"data": dataIkuroGamePrice[game]})
 
-@socketio.on('connectIkuroGamePrice')  # evento que activa el cliente/modulo para conectarse
-def connectIkuroGamePrice(data):
-    global tareaIkuroGamePriceTerminada
-    tareaIkuroGamePriceTerminada = False
-    print(request.sid)
-    emit('onIkuroGamePrice', data, broadcast=True)  # Activa el evento para que el cliente/modulo haga la tarea
-    # broadcast es para que emita a todos, porque si no solo emite al ultmimo que conecto
-
-@socketio.on('finIkuroGamePrice')  # Evento que usa el cliente/modulo para decir que termino la tarea
-def finIkuroGamePrice():
-    global tareaIkuroGamePriceTerminada, dataIkuroGamePrice
-    tareaIkuroGamePriceTerminada = True
-    emit('onFinishIkuroGamePrice',dataIkuroGamePrice,broadcast=True)
 
 ############################################################################################################################################################
 
 ############################################################################################################################################################
 #Complements
-
 @app.route('/setComplements' , methods=['POST'])  #endpoint que recibe la data de el app de c#
 def setComplements():
     global dataComplements
-    dataComplements = request.json
+    dataComplements.update(request.json)
     return jsonify({"status": "finalizada"})
 
-@app.route('/getComplements' , methods=['GET'])  # endpoint que da la data si es que hay
-def getComplements():
-    global tareaComplements,dataComplements
-    if tareaComplements==True:
+@app.route('/getComplements/<game>' , methods=['GET'])  # endpoint que da la data si es que hay
+def getComplements(game):
+    global dataComplements
+    if game == None:
         return jsonify({"data": dataComplements})
     else:
-        return jsonify({"data": "enProceso"})
+        return jsonify({"data": dataComplements[game]})
 
-@socketio.on('connectComplements')  # evento que activa el cliente/modulo para conectarse
-def connectComplements(data):
-    global tareaComplements
-    tareaComplements = False
-    print(request.sid)
-    emit('onComplements', data, broadcast=True)  # Activa el evento para que el cliente/modulo haga la tarea
-    # broadcast es para que emita a todos, porque si no solo emite al ultmimo que conecto
-
-@socketio.on('finComplements')  # Evento que usa el cliente/modulo para decir que termino la tarea
-def finComplements():
-    global tareaComplements, dataComplements
-    tareaComplements = True
-    emit('onFinishComplements',dataComplements,broadcast=True)
 
 ############################################################################################################################################################
 
@@ -179,28 +228,21 @@ def finComplements():
 
 #No es necesario el setHowLongToBeatTime porque el cliente esta en python entonces pasa la data como parametro cuando termine
 
-@app.route('/getHowLongToBeatTime' , methods=['GET'])  # endpoint que da la data si es que hay
-def getHowLongToBeatTime():
-    global tareaHowLongToBeatTimeTerminada, dataHowLongToBeatTime
-    if tareaHowLongToBeatTimeTerminada==True:
+@app.route('/setHowLongToBeatTime' , methods=['POST'])  #endpoint que recibe la data de el app de c#
+def setHowLongToBeatTime():
+    global dataHowLongToBeatTime
+    dataHowLongToBeatTime.update(request.json)
+    return jsonify({"status": "finalizada"})
+
+@app.route('/getHowLongToBeatTime/<game>' , methods=['GET'])  # endpoint que da la data si es que hay
+def getHowLongToBeatTime(game):
+    global dataHowLongToBeatTime
+    if game == None:
         return jsonify({"data": dataHowLongToBeatTime})
     else:
-        return jsonify({"data": "enProceso"})
+        return jsonify({"data": dataHowLongToBeatTime[game]})
 
-@socketio.on('connectHowLongToBeatTime')  # evento que activa el cliente/modulo para conectarse
-def connectHowLongToBeatTime(data):
-    global tareaHowLongToBeatTimeTerminada
-    tareaHowLongToBeatTimeTerminada = False
-    print(request.sid)
-    emit('onHowLongToBeatTime', data,broadcast=True)  # Activa el evento para que el cliente/modulo haga la tarea
-    # broadcast es para que emita a todos, porque si no solo emite al ultmimo que conecto
 
-@socketio.on('finHowLongToBeatTime')  # Evento que usa el cliente/modulo para decir que termino la tarea
-def finHowLongToBeatTime(data):  #trae la data aca, no es necesario el endpoint setHowLongToBeatTime
-    global tareaHowLongToBeatTimeTerminada, dataHowLongToBeatTime
-    dataHowLongToBeatTime=data
-    tareaHowLongToBeatTimeTerminada = True
-    emit('onFinishHowLongToBeatTime',dataHowLongToBeatTime,broadcast=True)
 ############################################################################################################################################################
 
 
