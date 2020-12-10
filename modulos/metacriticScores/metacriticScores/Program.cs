@@ -30,14 +30,14 @@ namespace metacriticScores
                 {
                     if (Nodo.InnerText != null && Nodo.InnerText != "tbd")
                     {
-                        score = new Score(nombre.Replace(" ", "").ToLower(),float.Parse("" + (10.0 * Int16.Parse(Nodo.InnerText)) / 100.0));
+                        score = new Score(nombre.ToLower(),float.Parse("" + (10.0 * Int16.Parse(Nodo.InnerText)) / 100.0));
                         break;
                     }
                 }
             }
             if (score == null)
             {
-                score = new Score(nombre.Replace(" ", "").ToLower(), 0);
+                score = new Score(nombre.ToLower(), 0);
                 listaScores.Add(score);
             }
             return score;

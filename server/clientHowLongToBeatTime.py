@@ -24,7 +24,7 @@ def send_json(timeToBeat):
     # Se arma el json
     json = {"type": "howLongToBeat", "date": today + "$" + time_format, "data": data}
 
-    socketIO.emit('endScrape', (const.HLTB_SOCKET_TYPE, json))  #emite evento para decirle al server que ya termino la tarea
+    socketIO.emit('endScrape', (const.HLTB_SOCKET_TYPE, name, json))  #emite evento para decirle al server que ya termino la tarea
 
     print("Proceso exitoso!\n");
 

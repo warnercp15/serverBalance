@@ -12,7 +12,7 @@ def tarea(args):
     params=args.replace(" ","-")  #por si el nombre lleva espacios no lo entienda como mas de un parametro, en c# se acomoda!
     process = subprocess.Popen(ruta+" "+params, shell=True)  #inicia proceso, se ejecuta en esta misma consola
     process.wait()  #espera que termine el proceso
-    socketIO.emit('endScrape', (const.IKURO_SOCKET_TYPE,))  #emite evento para decirle al server que ya termino la tarea
+    socketIO.emit('endScrape', (const.IKURO_SOCKET_TYPE, args))  #emite evento para decirle al server que ya termino la tarea
 
 socketIO = SocketIO("http://localhost",5000) #se conecta al server
 socketIO.on('start-' + const.IKURO_SOCKET_TYPE, tarea)  # define que hacer cuando se actice el evento
