@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "C:\\Users\\warner\\Desktop\\modulos\\complements\\complements\\complements.csproj": {}
+    "C:\\Users\\warner\\Desktop\\serverBalance\\modulos\\complements\\complements\\complements.csproj": {}
   },
   "projects": {
-    "C:\\Users\\warner\\Desktop\\modulos\\complements\\complements\\complements.csproj": {
+    "C:\\Users\\warner\\Desktop\\serverBalance\\modulos\\complements\\complements\\complements.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\warner\\Desktop\\modulos\\complements\\complements\\complements.csproj",
+        "projectUniqueName": "C:\\Users\\warner\\Desktop\\serverBalance\\modulos\\complements\\complements\\complements.csproj",
         "projectName": "complements",
-        "projectPath": "C:\\Users\\warner\\Desktop\\modulos\\complements\\complements\\complements.csproj",
+        "projectPath": "C:\\Users\\warner\\Desktop\\serverBalance\\modulos\\complements\\complements\\complements.csproj",
         "packagesPath": "C:\\Users\\warner\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\warner\\Desktop\\modulos\\complements\\complements\\obj\\",
+        "outputPath": "C:\\Users\\warner\\Desktop\\serverBalance\\modulos\\complements\\complements\\obj\\",
         "projectStyle": "PackageReference",
         "configFilePaths": [
           "C:\\Users\\warner\\AppData\\Roaming\\NuGet\\NuGet.Config",

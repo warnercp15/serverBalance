@@ -1,12 +1,13 @@
 import json
+import flask_socketio
+
 import const
 from flask import Flask,request,jsonify
 from flask_socketio import SocketIO,emit
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = '12345'
-#socketio = SocketIO(app)
-socketio = SocketIO(app, cors_allowed_origins="*", async_mode='eventlet')
+socketio = SocketIO(app, cors_allowed_origins="*")
 
 finalData=[]
 
@@ -49,79 +50,76 @@ para despues recorrer esa lista de nombre que es mas liviana y verificar si esta
 si estan procede a armar la data y anadirla a la lista y emitir la lista con la data nueva
 '''
 
-def haveAllData():
+def haveAllData(name):
     global listComplement,listDixGamerPrice,listIkuroGamePrice,listHowLongToBeatTime,listMetacriticScore,listNames,finalData
 
     print('len(listNames): ' + str(len(listNames)))
     print('len(const.GAMES): ' + str(len(const.GAMES)*5))
-    if len(listNames) == len(const.GAMES)*5:
+    resNames = [x for x in listNames if x == name]  # se creo un lista con los nombres porque es mas rapido que recorrer que con los objetos
+
+    if len(resNames) == 5:
         print()
         print('Starting data parsing')
-        tempData = []
-        for name in const.GAMES:
-            #cuando encuentre el nombre 5 veces quiere decir que tiene todos los datos
-            resNames = [x for x in listNames if x == name]  #se creo un lista con los nombres porque es mas rapido que recorrer que con los objetos
+        #cuando encuentre el nombre 5 veces quiere decir que tiene todos los datos
 
-            if len(resNames)==5:
-                resComplement=[x for x in listComplement if x["name"]== name]
-                resDixGamerPrice=[x for x in listDixGamerPrice if x["name"]== name]
-                resIkuroGamePrice=[x for x in listIkuroGamePrice if x["name"]== name]
-                resHowLongToBeatTime=[x for x in listHowLongToBeatTime if x["name"]== name]
-                resMetacriticScore=[x for x in listMetacriticScore if x["name"]== name]
+        resComplement=[x for x in listComplement if x["name"]== name]
+        resDixGamerPrice=[x for x in listDixGamerPrice if x["name"]== name]
+        resIkuroGamePrice=[x for x in listIkuroGamePrice if x["name"]== name]
+        resHowLongToBeatTime=[x for x in listHowLongToBeatTime if x["name"]== name]
+        resMetacriticScore=[x for x in listMetacriticScore if x["name"]== name]
 
-                #empieza a armar la data
+        #empieza a armar la data
 
-                n1=resDixGamerPrice[0]["price"]
-                n2=resIkuroGamePrice[0]["price"]
-                precio=""
-                offer=False
+        n1=resDixGamerPrice[0]["price"]
+        n2=resIkuroGamePrice[0]["price"]
+        precio=""
+        offer=False
 
-                #acomoda los precios, si n1 es negativo es que hay oferta
-                if float(n1)<0:
-                    offer=True
+        #acomoda los precios, si n1 es negativo es que hay oferta
+        if float(n1)<0:
+            offer=True
 
-                    if float(n1*-1)<float(n2):
-                        precio = "oferta: $" + str(float(n1* -1)) + "-$" + str(n2)
+            if float(n1*-1)<float(n2):
+                precio = "$" + str(float(n1* -1)) + "-$" + str(n2)
 
-                    elif float(n1*-1)==float(n2):
-                        precio = "oferta: $" + str(n2)
+            elif float(n1*-1)==float(n2):
+                precio = "$" + str(n2)
 
-                    else:
-                        precio = "oferta: $" + str(n2) + "-$" + str(float(n1 * -1))
-                else:
+            else:
+                precio = "$" + str(n2) + "-$" + str(float(n1 * -1))
+        else:
 
-                    if float(n1)<float(n2):
-                        precio = "$" + str(n1) + "-$" + str(n2)
+            if float(n1)<float(n2):
+                precio = "$" + str(n1) + "-$" + str(n2)
 
-                    elif float(n1*-1)==float(n2):
-                        precio = "$" + str(n2)
+            elif float(n1*-1)==float(n2):
+                precio = "$" + str(n2)
 
-                    else:
-                        precio = "$" + str(n2) + "-$" + str(n1)
+            else:
+                precio = "$" + str(n2) + "-$" + str(n1)
 
-                jsonData={
-                    "offer":offer,
-                    "name":name,
-                    "imageUrl":resComplement[0]["image"],
-                    "price":precio,
-                    "score":resMetacriticScore[0]["score"],
-                    "timeToBeat":resHowLongToBeatTime[0]["time"]+"h"
-                }
+        jsonData={
+            "offer":offer,
+            "name":name,
+            "imageUrl":resComplement[0]["image"],
+            "price":precio,
+            "score":resMetacriticScore[0]["score"],
+            "timeToBeat":resHowLongToBeatTime[0]["time"]+"h"
+        }
 
-                tempData.append(jsonData) #lo agrega a la lista de juegos que va a consultar el frontend
-                socketio.emit('onNewData', tempData,broadcast=True)  #emite nuevo juego
+        finalData.append(jsonData) #lo agrega a la lista de juegos que va a consultar el frontend
+        socketio.emit('onNewData', jsonData,broadcast=True)  #emite nuevo juego
 
-                if len(tempData) == len(const.GAMES):
-                    print(finalData)
-                    finalData = tempData
-                    socketio.emit('dataCompleted', finalData, broadcast=True)  #emite nuevo juego
+        if len(finalData)==len(const.GAMES):
+            finalData=[]
+            socketio.emit('end', [], broadcast=True)  # emite nuevo juego
 
 @app.route('/')
 def index():
+    emit("pong", "Hi desde server", broadcast=True)
     return "Hola soy el server principal"
 
 ############################################################################################################################################################
-# Manejo de sockets
 
 @socketio.on('connect-socket')  #evento que activa el cliente/modulo para conectarse
 def connect(socketType):
@@ -156,7 +154,7 @@ def startScrape(data):
     else:
         requestStack[data[1]].append(data[0])
         print('--------------------- Addedd to the ' + data[1].upper() + ' queue.')
-        return
+        #return
 
 """ Inicia cualquier tipo de scrapping
 
@@ -182,7 +180,7 @@ def endScrape(data):
         if len(data) > 2:
             listMetacriticScore.append(data[2])
 
-        haveAllData()  # se termino tarea, agrego nombre
+        haveAllData(data[1])  # se termino tarea, agrego nombre
         if len(requestStack[const.METACRITIC_SOCKET_TYPE]) > 0:
             print('------------ Theres processes in queue for ' + data[0] + ', socket ' + request.sid + ' will continue with next in queue ')
             socketio.emit('start-' + data[0], requestStack[const.METACRITIC_SOCKET_TYPE].pop(0), room=request.sid)
@@ -191,7 +189,7 @@ def endScrape(data):
         if len(data) > 2:
             listComplement.append(data[2])
 
-        haveAllData()  # se termino tarea, agrego nombre
+        haveAllData(data[1])  # se termino tarea, agrego nombre
         if len(requestStack[const.COMPLEMENTS_SOCKET_TYPE]) > 0:
             print('------------ Theres processes in queue for ' + data[0] + ', socket ' + request.sid + ' will continue with next in queue ')
             socketio.emit('start-' + data[0], requestStack[const.COMPLEMENTS_SOCKET_TYPE].pop(0), room=request.sid)
@@ -200,7 +198,7 @@ def endScrape(data):
         if len(data) > 2:
             listDixGamerPrice.append(data[2])
 
-        haveAllData()  # se termino tarea, agrego nombre
+        haveAllData(data[1])  # se termino tarea, agrego nombre
         if len(requestStack[const.DIX_SOCKET_TYPE]) > 0:
             print('------------ Theres processes in queue for ' + data[0] + ', socket ' + request.sid + ' will continue with next in queue ')
             socketio.emit('start-' + data[0], requestStack[const.DIX_SOCKET_TYPE].pop(0), room=request.sid)
@@ -209,7 +207,7 @@ def endScrape(data):
         if len(data) > 2:
             listIkuroGamePrice.append(data[2])
 
-        haveAllData()  # se termino tarea, agrego nombre
+        haveAllData(data[1])  # se termino tarea, agrego nombre
         if len(requestStack[const.IKURO_SOCKET_TYPE]) > 0:
             print('------------ Theres processes in queue for ' + data[0] + ', socket ' + request.sid + ' will continue with next in queue ')
             socketio.emit('start-' + data[0], requestStack[const.IKURO_SOCKET_TYPE].pop(0), room=request.sid)
@@ -219,7 +217,7 @@ def endScrape(data):
 
         if len(data) > 2:
             listHowLongToBeatTime.append(data[2]['data'])
-        haveAllData()  # se termino tarea, agrego nombre
+        haveAllData(data[1])  # se termino tarea, agrego nombre
         if len(requestStack[const.HLTB_SOCKET_TYPE]) > 0:
             # print('------------ Theres processes in queue for ' + data[0] + ', socket ' + request.sid + ' will continue with next in queue ')
             socketio.emit('start-' + data[0], requestStack[const.HLTB_SOCKET_TYPE].pop(0), room=request.sid)
@@ -249,8 +247,8 @@ def endScrape(data):
 ############################################################################################################################################################
 # Data para en frontend, se supone que el cliente principal va a armar todo y mandarlo a este endpoint
 
-@app.route('/setData' , methods=['GET'])  #endpoint que recibe la data de el app de c#
-def setData():
+@socketio.on('startAll')
+def startAll():
     global listComplement,listDixGamerPrice,listIkuroGamePrice,listHowLongToBeatTime,listMetacriticScore,listNames,finalData, requestStack
 
     # Reset data
@@ -405,7 +403,6 @@ def getHowLongToBeatTimeGame(game):
 
 ############################################################################################################################################################
 
-
 if __name__ == '__main__':
     #socketio.run()  #para correrlo en el server
-    socketio.run(app, debug=True,port="5000") #para correrlo local
+    socketio.run(app, debug=True,port=5000) #para correrlo local
