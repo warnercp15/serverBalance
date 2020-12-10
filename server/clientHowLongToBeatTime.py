@@ -1,5 +1,6 @@
-from socketIO_client import SocketIO
 import datetime
+import const
+from socketIO_client import SocketIO
 from howlongtobeatpy import HowLongToBeat
 
 name=''
@@ -23,7 +24,7 @@ def send_json(timeToBeat):
     # Se arma el json
     json = {"type": "howLongToBeat", "date": today + "$" + time_format, "data": data}
 
-    socketIO.emit('finHowLongToBeatTime',json)  #emite evento para decirle al server que ya termino la tarea
+    socketIO.emit('endScrape', (const.HLTB_SOCKET_TYPE, name, json))  #emite evento para decirle al server que ya termino la tarea
 
     print("Proceso exitoso!\n");
 
@@ -31,6 +32,7 @@ def tarea(args):
     global name
     print("Proceso HowLongToBeat")
     try:
+        print('Iniciando tarea con ' + args.replace(" ","-"))
         name=args
         results = HowLongToBeat(0).search(args)
         result = max(results, key=lambda element: element.similarity).gameplay_main
@@ -42,7 +44,8 @@ def tarea(args):
         print(e)
 
 socketIO = SocketIO("http://localhost",5000) #se conecta al server
-socketIO.on('onHowLongToBeatTime', tarea)  # define que hacer cuando se actice el evento
+socketIO.on('start-' + const.HLTB_SOCKET_TYPE, tarea)  # define que hacer cuando se actice el evento
 
+socketIO.emit('connect-socket', const.HLTB_SOCKET_TYPE)
 print("Conectado y escuchando.\n")
 socketIO.wait()  #queda escuchando al server en caso de que se active algun evento

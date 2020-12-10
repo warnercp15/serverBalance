@@ -14,8 +14,9 @@ listaJuegos=["uncharted the nathan drake collection", "final fantasy vii remake"
 def newData(data):
     print(data)
 
-socketIO = SocketIO("http://localhost",5000) #se conecta al server
-#socketIO = SocketIO('http://warnercp15.pythonanywhere.com') #se conecta al server
+print('Iniciando eventos')
+# socketIO = SocketIO("http://localhost",5000) #se conecta al server
+socketIO = SocketIO('http://invokeee.pythonanywhere.com') #se conecta al server
 
 socketIO.on('onNewData', newData)  # define que hacer cuando se actice el evento
 

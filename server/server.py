@@ -1,5 +1,5 @@
 import json
-
+import const
 from flask import Flask,request,jsonify
 from flask_socketio import SocketIO,emit
 
@@ -8,19 +8,31 @@ app.config['SECRET_KEY'] = '12345'
 #socketio = SocketIO(app)
 socketio = SocketIO(app, cors_allowed_origins="*", async_mode='eventlet')
 
-tareaMetacriticScoreTerminada=False
-tareaDixGamerPriceTerminada=False
-tareaIkuroGamePriceTerminada=False
-tareaComplements=False
-tareaHowLongToBeatTimeTerminada = False
-
-dataMetacriticScore=None
-dataDixGamerPrice=None
-dataIkuroGamePrice=None
-dataComplements=None
-dataHowLongToBeatTime = None
-
 finalData=[]
+
+requestStack = {
+    const.METACRITIC_SOCKET_TYPE: [],
+    const.COMPLEMENTS_SOCKET_TYPE: [],
+    const.DIX_SOCKET_TYPE: [],
+    const.IKURO_SOCKET_TYPE: [],
+    const.HLTB_SOCKET_TYPE: []
+}
+
+availableSockets={
+    const.METACRITIC_SOCKET_TYPE: [],
+    const.COMPLEMENTS_SOCKET_TYPE: [],
+    const.DIX_SOCKET_TYPE: [],
+    const.IKURO_SOCKET_TYPE: [],
+    const.HLTB_SOCKET_TYPE: []
+}
+
+busySockets={
+    const.METACRITIC_SOCKET_TYPE: [],
+    const.COMPLEMENTS_SOCKET_TYPE: [],
+    const.DIX_SOCKET_TYPE: [],
+    const.IKURO_SOCKET_TYPE: [],
+    const.HLTB_SOCKET_TYPE: []
+}
 
 listComplement=[]
 listDixGamerPrice=[]
@@ -37,76 +49,240 @@ para despues recorrer esa lista de nombre que es mas liviana y verificar si esta
 si estan procede a armar la data y anadirla a la lista y emitir la lista con la data nueva
 '''
 
-def haveAllData(name):
-    global listComplement,listDixGamerPrice,listIkuroGamePrice,listHowLongToBeatTime,listMetacriticScore,listNames
+def haveAllData():
+    global listComplement,listDixGamerPrice,listIkuroGamePrice,listHowLongToBeatTime,listMetacriticScore,listNames,finalData
 
-    #cuando encuentre el nombre 5 veces quiere decir que tiene todos los datos
-    resNames = [x for x in listNames if x == name]  #se creo un lista con los nombres porque es mas rapido que recorrer que con los objetos
-
-    if len(resNames)==5:
-        resComplement=[x for x in listComplement if x["name"]== name]
-        resDixGamerPrice=[x for x in listDixGamerPrice if x["name"]== name]
-        resIkuroGamePrice=[x for x in listIkuroGamePrice if x["name"]== name]
-        resHowLongToBeatTime=[x for x in listHowLongToBeatTime if x["name"]== name]
-        resMetacriticScore=[x for x in listMetacriticScore if x["name"]== name]
-
+    print('len(listNames): ' + str(len(listNames)))
+    print('len(const.GAMES): ' + str(len(const.GAMES)*5))
+    if len(listNames) == len(const.GAMES)*5:
         print()
-        print(len(resComplement))
-        print(len(resDixGamerPrice))
-        print(len(resIkuroGamePrice))
-        print(len(resHowLongToBeatTime))
-        print(len(resMetacriticScore))
-        #imprime 1 por cada lista, porque ya sabemos que estan los 5 datos
+        print('Starting data parsing')
+        tempData = []
+        for name in const.GAMES:
+            #cuando encuentre el nombre 5 veces quiere decir que tiene todos los datos
+            resNames = [x for x in listNames if x == name]  #se creo un lista con los nombres porque es mas rapido que recorrer que con los objetos
 
+            if len(resNames)==5:
+                resComplement=[x for x in listComplement if x["name"]== name]
+                resDixGamerPrice=[x for x in listDixGamerPrice if x["name"]== name]
+                resIkuroGamePrice=[x for x in listIkuroGamePrice if x["name"]== name]
+                resHowLongToBeatTime=[x for x in listHowLongToBeatTime if x["name"]== name]
+                resMetacriticScore=[x for x in listMetacriticScore if x["name"]== name]
 
-        #empieza a armar la data
+                #empieza a armar la data
 
-        n1=resDixGamerPrice[0]["price"]
-        n2=resIkuroGamePrice[0]["price"]
-        precio=""
-        offer=False
+                n1=resDixGamerPrice[0]["price"]
+                n2=resIkuroGamePrice[0]["price"]
+                precio=""
+                offer=False
 
-        #acomoda los precios, si n1 es negativo es que hay oferta
-        if float(n1)<0:
-            offer=True
+                #acomoda los precios, si n1 es negativo es que hay oferta
+                if float(n1)<0:
+                    offer=True
 
-            if float(n1*-1)<float(n2):
-                precio = "oferta: $" + str(float(n1* -1)) + "-$" + str(n2)
+                    if float(n1*-1)<float(n2):
+                        precio = "oferta: $" + str(float(n1* -1)) + "-$" + str(n2)
 
-            elif float(n1*-1)==float(n2):
-                precio = "oferta: $" + str(n2)
+                    elif float(n1*-1)==float(n2):
+                        precio = "oferta: $" + str(n2)
 
-            else:
-                precio = "oferta: $" + str(n2) + "-$" + str(float(n1 * -1))
-        else:
+                    else:
+                        precio = "oferta: $" + str(n2) + "-$" + str(float(n1 * -1))
+                else:
 
-            if float(n1)<float(n2):
-                precio = "$" + str(n1) + "-$" + str(n2)
+                    if float(n1)<float(n2):
+                        precio = "$" + str(n1) + "-$" + str(n2)
 
-            elif float(n1*-1)==float(n2):
-                precio = "$" + str(n2)
+                    elif float(n1*-1)==float(n2):
+                        precio = "$" + str(n2)
 
-            else:
-                precio = "$" + str(n2) + "-$" + str(n1)
+                    else:
+                        precio = "$" + str(n2) + "-$" + str(n1)
 
-        jsonData={
-            "offer":offer,
-            "name":name,
-            "imageUrl":resComplement[0]["image"],
-            "price":precio,
-            "score":resMetacriticScore[0]["score"],
-            "timeToBeat":resHowLongToBeatTime[0]["time"]+"h"
-        }
+                jsonData={
+                    "offer":offer,
+                    "name":name,
+                    "imageUrl":resComplement[0]["image"],
+                    "price":precio,
+                    "score":resMetacriticScore[0]["score"],
+                    "timeToBeat":resHowLongToBeatTime[0]["time"]+"h"
+                }
 
-        finalData.append(jsonData) #lo agrega a la lista de juegos que va a consultar el frontend
-        emit('onNewData', finalData,broadcast=True)  #emite nuevo juego
+                tempData.append(jsonData) #lo agrega a la lista de juegos que va a consultar el frontend
+                socketio.emit('onNewData', tempData,broadcast=True)  #emite nuevo juego
+
+                if len(tempData) == len(const.GAMES):
+                    print(finalData)
+                    finalData = tempData
+                    socketio.emit('dataCompleted', finalData, broadcast=True)  #emite nuevo juego
 
 @app.route('/')
 def index():
     return "Hola soy el server principal"
 
 ############################################################################################################################################################
+# Manejo de sockets
+
+@socketio.on('connect-socket')  #evento que activa el cliente/modulo para conectarse
+def connect(socketType):
+    global availableSockets
+    availableSockets[socketType].append(request.sid)
+    print(availableSockets)
+    print('> Socket ' + request.sid + ' added to ' + socketType + ' queue.')
+
+""" Inserta el socket en la cola correspondiente
+
+    Se encarga de notificar al servidor que hay un nuevo nodo conectado 
+    y lo inserta en la cola al que corresponde
+
+    Args:
+      socketType:
+        Un string con el tipo de socket que se conecto
+          [En el archivo de constantes se encuentran los tipos]
+
+    Returns:
+      Nada
+    """
+
+@socketio.on('startScrape')  
+def startScrape(data):
+    print('----------- Starting Scrape with ' + str(data))
+    global availableSockets, busySockets
+    if len(availableSockets[data[1]]) > 0:
+        client = availableSockets[data[1]].pop(0)
+        busySockets[data[1]].append(client)
+        print('--------------------- Socket ' + client + ' to complete the job.')
+        socketio.emit('start-' + data[1], data[0], room=client)
+    else:
+        requestStack[data[1]].append(data[0])
+        print('--------------------- Addedd to the ' + data[1].upper() + ' queue.')
+        return
+
+""" Inicia cualquier tipo de scrapping
+
+    Segun el socketType, se encarga de iniciar el scrapping si 
+    existen clientes disponibles para realizar el scrape.
+
+    Args:
+      data:
+        [0]: Un string con el nombre del juego a buscar
+        [1]: Un string con el tipo de scrape a iniciar
+          [En el archivo de constantes se encuentran los tipos]
+
+    Returns:
+      Nada
+    """
+
+@socketio.on('endScrape')
+def endScrape(data):
+    global availableSockets, busySockets, listNames, listComplement, listDixGamerPrice, listIkuroGamePrice, listHowLongToBeatTime, listMetacriticScore
+    listNames.append(data[1])  # se termino tarea, agrego nombre
+    
+    if data[0] == const.METACRITIC_SOCKET_TYPE:
+        if len(data) > 2:
+            listMetacriticScore.append(data[2])
+
+        haveAllData()  # se termino tarea, agrego nombre
+        if len(requestStack[const.METACRITIC_SOCKET_TYPE]) > 0:
+            print('------------ Theres processes in queue for ' + data[0] + ', socket ' + request.sid + ' will continue with next in queue ')
+            socketio.emit('start-' + data[0], requestStack[const.METACRITIC_SOCKET_TYPE].pop(0), room=request.sid)
+            return
+    elif data[0] == const.COMPLEMENTS_SOCKET_TYPE:
+        if len(data) > 2:
+            listComplement.append(data[2])
+
+        haveAllData()  # se termino tarea, agrego nombre
+        if len(requestStack[const.COMPLEMENTS_SOCKET_TYPE]) > 0:
+            print('------------ Theres processes in queue for ' + data[0] + ', socket ' + request.sid + ' will continue with next in queue ')
+            socketio.emit('start-' + data[0], requestStack[const.COMPLEMENTS_SOCKET_TYPE].pop(0), room=request.sid)
+            return
+    elif data[0] == const.DIX_SOCKET_TYPE:
+        if len(data) > 2:
+            listDixGamerPrice.append(data[2])
+
+        haveAllData()  # se termino tarea, agrego nombre
+        if len(requestStack[const.DIX_SOCKET_TYPE]) > 0:
+            print('------------ Theres processes in queue for ' + data[0] + ', socket ' + request.sid + ' will continue with next in queue ')
+            socketio.emit('start-' + data[0], requestStack[const.DIX_SOCKET_TYPE].pop(0), room=request.sid)
+            return
+    elif data[0] == const.IKURO_SOCKET_TYPE:
+        if len(data) > 2:
+            listIkuroGamePrice.append(data[2])
+
+        haveAllData()  # se termino tarea, agrego nombre
+        if len(requestStack[const.IKURO_SOCKET_TYPE]) > 0:
+            print('------------ Theres processes in queue for ' + data[0] + ', socket ' + request.sid + ' will continue with next in queue ')
+            socketio.emit('start-' + data[0], requestStack[const.IKURO_SOCKET_TYPE].pop(0), room=request.sid)
+            return
+    elif data[0] == const.HLTB_SOCKET_TYPE:
+        print(data[0].upper() + '------------ Socket ' + request.sid + ' ended processing ' + data[1])
+
+        if len(data) > 2:
+            listHowLongToBeatTime.append(data[2]['data'])
+        haveAllData()  # se termino tarea, agrego nombre
+        if len(requestStack[const.HLTB_SOCKET_TYPE]) > 0:
+            # print('------------ Theres processes in queue for ' + data[0] + ', socket ' + request.sid + ' will continue with next in queue ')
+            socketio.emit('start-' + data[0], requestStack[const.HLTB_SOCKET_TYPE].pop(0), room=request.sid)
+            return
+
+    print(data[0].upper() + '-------- No more requests in queue')
+    busySockets[data[0]].remove(request.sid)
+    availableSockets[data[0]].append(request.sid)
+
+""" Notifica al servidor que un cliente termino el scrapping
+
+    Se encarga de avisar devolver al servidor los datos
+    obtenidos del scrapping, asi como notificar que se encuentra
+    disponible para realizar tareas de nuevo
+
+    Args:
+      data:
+        Un objeto con los datos del scrape
+      socketType:
+        Un string con el tipo de scrape que realizó
+          [En el archivo de constantes se encuentran los tipos]
+
+    Returns:
+      Nada
+    """
+
+############################################################################################################################################################
 # Data para en frontend, se supone que el cliente principal va a armar todo y mandarlo a este endpoint
+
+@app.route('/setData' , methods=['GET'])  #endpoint que recibe la data de el app de c#
+def setData():
+    global listComplement,listDixGamerPrice,listIkuroGamePrice,listHowLongToBeatTime,listMetacriticScore,listNames,finalData, requestStack
+
+    # Reset data
+    listMetacriticScore=[]
+    listDixGamerPrice=[]
+    listIkuroGamePrice=[]
+    listComplement=[]
+    listHowLongToBeatTime=[]
+    listNames=[]
+
+    requestStack = {
+        const.METACRITIC_SOCKET_TYPE: [],
+        const.COMPLEMENTS_SOCKET_TYPE: [],
+        const.DIX_SOCKET_TYPE: [],
+        const.IKURO_SOCKET_TYPE: [],
+        const.HLTB_SOCKET_TYPE: []
+    }
+
+    for game in const.GAMES:
+        startScrape((game, const.METACRITIC_SOCKET_TYPE))
+        startScrape((game, const.COMPLEMENTS_SOCKET_TYPE))
+        startScrape((game, const.DIX_SOCKET_TYPE))
+        startScrape((game, const.IKURO_SOCKET_TYPE))
+        startScrape((game, const.HLTB_SOCKET_TYPE))
+
+@app.route('/setData/<game>' , methods=['GET'])  #endpoint que recibe la data de el app de c#
+def setDataGame(game):
+    startScrape((game, const.METACRITIC_SOCKET_TYPE))
+    startScrape((game, const.COMPLEMENTS_SOCKET_TYPE))
+    startScrape((game, const.DIX_SOCKET_TYPE))
+    startScrape((game, const.IKURO_SOCKET_TYPE))
+    startScrape((game, const.HLTB_SOCKET_TYPE))
 
 @socketio.on('addGame')  #evento agrega los datos de un juego
 def addGame(data):
@@ -122,33 +298,20 @@ def getData():
 
 @app.route('/setMetacritic' , methods=['POST'])  #endpoint que recibe la data de el app de c#
 def setMetacritic():
-    global dataMetacriticScore
-    dataMetacriticScore = request.json
-    listMetacriticScore.append(dataMetacriticScore["data"])  #se anade la data obtenida a la lista correspondiente
+    global listMetacriticScore
+    listMetacriticScore.append(request.json['data'])
     return jsonify({"status": "finalizada"})
 
 @app.route('/getMetacritic' , methods=['GET'])  # endpoint que da la data si es que hay
 def getMetacritic():
-    global tareaMetacriticScoreTerminada,dataMetacriticScore
-    if tareaMetacriticScoreTerminada==True:
-        return jsonify({"data": dataMetacriticScore})
-    else:
-        return jsonify({"status": "enProceso"})
+    global listMetacriticScore
+    return jsonify({"data": listMetacriticScore})
 
-@socketio.on('connectMetacriticScore')  #evento que activa el cliente/modulo para conectarse
-def connectMetacriticScore(data):
-    global tareaMetacriticScoreTerminada
-    tareaMetacriticScoreTerminada = False
-    emit('onMetacriticScore',data,broadcast=True) #Activa el evento para que el cliente/modulo haga la tarea
-    # broadcast es para que emita a todos, porque si no solo emite al ultmimo que conecto
+@app.route('/getMetacritic/<game>' , methods=['GET'])  # endpoint que da la data si es que hay
+def getMetacriticGame(game):
+    global listMetacriticScore
+    return jsonify({"data": [x for x in listMetacriticScore if x['name'] == game]})
 
-@socketio.on('finMetacriticScore')  #Evento que usa el cliente/modulo para decir que termino la tarea
-def finMetacriticScore(name):
-    global tareaMetacriticScoreTerminada,dataMetacriticScore
-    tareaMetacriticScoreTerminada = True
-    listNames.append(name)  #se termino tarea, agrego nombre
-    haveAllData(name)  #verifico si tengo todos los datos para armar la data y actualizar
-    #emit('onFinishMetacriticScore',dataMetacriticScore,broadcast=True)
 ############################################################################################################################################################
 
 
@@ -158,33 +321,19 @@ def finMetacriticScore(name):
 
 @app.route('/setDixGamerPrice' , methods=['POST'])  #endpoint que recibe la data de el app de c#
 def setDixGamerPrice():
-    global dataDixGamerPrice
-    dataDixGamerPrice = request.json
-    listDixGamerPrice.append(dataDixGamerPrice["data"]) #se anade la data obtenida a la lista correspondiente
+    global listDixGamerPrice
+    listDixGamerPrice.append(request.json['data'])
     return jsonify({"status": "finalizada"})
 
 @app.route('/getDixGamerPrice' , methods=['GET'])  # endpoint que da la data si es que hay
 def getDixGamerPrice():
-    global tareaDixGamerPriceTerminada,dataDixGamerPrice
-    if tareaDixGamerPriceTerminada==True:
-        return jsonify({"data": dataDixGamerPrice})
-    else:
-        return jsonify({"data": "enProceso"})
+    global listDixGamerPrice
+    return jsonify({"data": listDixGamerPrice})
 
-@socketio.on('connectDixGamerPrice')  #evento que activa el cliente/modulo para conectarse
-def connectDixGamerPrice(data):
-    global tareaDixGamerPriceTerminada
-    tareaDixGamerPriceTerminada = False
-    emit('onDixGamerPrice',data,broadcast=True) #Activa el evento para que el cliente/modulo haga la tarea
-    # broadcast es para que emita a todos, porque si no solo emite al ultmimo que conecto
-
-@socketio.on('finDixGamerPrice')  #Evento que usa el cliente/modulo para decir que termino la tarea
-def finDixGamerPrice(name):
-    global tareaDixGamerPriceTerminada,dataDixGamerPrice
-    tareaDixGamerPriceTerminada = True
-    listNames.append(name)  # se termino tarea, agrego nombre
-    haveAllData(name)  # verifico si tengo todos los datos para armar la data y actualizar
-    #emit('onFinishDixGamerPrice',dataDixGamerPrice,broadcast=True)
+@app.route('/getDixGamerPrice/<game>' , methods=['GET'])  # endpoint que da la data si es que hay
+def getDixGamerPriceGame(game):
+    global listDixGamerPrice
+    return jsonify({"data": [x for x in listDixGamerPrice if x['name'] == game]})
 
 ############################################################################################################################################################
 
@@ -194,68 +343,41 @@ def finDixGamerPrice(name):
 
 @app.route('/setIkuroGamePrice' , methods=['POST'])  #endpoint que recibe la data de el app de c#
 def setIkuroGamePrice():
-    global dataIkuroGamePrice
-    dataIkuroGamePrice = request.json
-    listIkuroGamePrice.append(dataIkuroGamePrice["data"])  #se anade la data obtenida a la lista correspondiente
+    global listIkuroGamePrice
+    listIkuroGamePrice.append(request.json['data'])
     return jsonify({"status": "finalizada"})
 
 @app.route('/getIkuroGamePrice' , methods=['GET'])  # endpoint que da la data si es que hay
 def getIkuroGamePrice():
-    global tareaIkuroGamePriceTerminada,dataIkuroGamePrice
-    if tareaIkuroGamePriceTerminada==True:
-        return jsonify({"data": dataIkuroGamePrice})
-    else:
-        return jsonify({"data": "enProceso"})
+    global listIkuroGamePrice
+    return jsonify({"data": listIkuroGamePrice})
 
-@socketio.on('connectIkuroGamePrice')  # evento que activa el cliente/modulo para conectarse
-def connectIkuroGamePrice(data):
-    global tareaIkuroGamePriceTerminada
-    tareaIkuroGamePriceTerminada = False
-    emit('onIkuroGamePrice', data, broadcast=True)  # Activa el evento para que el cliente/modulo haga la tarea
-    # broadcast es para que emita a todos, porque si no solo emite al ultmimo que conecto
+@app.route('/getIkuroGamePrice/<game>' , methods=['GET'])  # endpoint que da la data si es que hay
+def getIkuroGamePriceGame(game):
+    global listIkuroGamePrice
+    return jsonify({"data": [x for x in listIkuroGamePrice if x['name'] == game]})
 
-@socketio.on('finIkuroGamePrice')  # Evento que usa el cliente/modulo para decir que termino la tarea
-def finIkuroGamePrice(name):
-    global tareaIkuroGamePriceTerminada, dataIkuroGamePrice
-    tareaIkuroGamePriceTerminada = True
-    listNames.append(name)  # se termino tarea, agrego nombre
-    haveAllData(name)  # verifico si tengo todos los datos para armar la data y actualizar
-    #emit('onFinishIkuroGamePrice',dataIkuroGamePrice,broadcast=True)
 
 ############################################################################################################################################################
 
 ############################################################################################################################################################
 #Complements
-
 @app.route('/setComplements' , methods=['POST'])  #endpoint que recibe la data de el app de c#
 def setComplements():
-    global dataComplements
-    dataComplements = request.json
-    listComplement.append(dataComplements["data"])  #se anade la data obtenida a la lista correspondiente
+    global listComplement
+    listComplement.append(request.json['data'])
     return jsonify({"status": "finalizada"})
 
 @app.route('/getComplements' , methods=['GET'])  # endpoint que da la data si es que hay
 def getComplements():
-    global tareaComplements,dataComplements
-    if tareaComplements==True:
-        return jsonify({"data": dataComplements})
-    else:
-        return jsonify({"data": "enProceso"})
+    global listComplement
+    return jsonify({"data": listComplement})
 
-@socketio.on('connectComplements')  # evento que activa el cliente/modulo para conectarse
-def connectComplements(data):
-    global tareaComplements
-    tareaComplements = False
-    emit('onComplements', data, broadcast=True)  # Activa el evento para que el cliente/modulo haga la tarea
-    # broadcast es para que emita a todos, porque si no solo emite al ultmimo que conecto
+@app.route('/getComplements/<game>' , methods=['GET'])  # endpoint que da la data si es que hay
+def getComplementsGame(game):
+    global listComplement
+    return jsonify({"data": [x for x in listComplement if x['name'] == game]})
 
-@socketio.on('finComplements')  # Evento que usa el cliente/modulo para decir que termino la tarea
-def finComplements(name):
-    global tareaComplements, dataComplements
-    tareaComplements = True
-    listNames.append(name)  # se termino tarea, agrego nombre
-    haveAllData(name)  # verifico si tengo todos los datos para armar la data y actualizar
-    #emit('onFinishComplements',dataComplements,broadcast=True)
 
 ############################################################################################################################################################
 
@@ -264,29 +386,23 @@ def finComplements(name):
 
 #No es necesario el setHowLongToBeatTime porque el cliente esta en python entonces pasa la data como parametro cuando termine
 
+@app.route('/setHowLongToBeatTime' , methods=['POST'])  #endpoint que recibe la data de el app de c#
+def setHowLongToBeatTime():
+    global listHowLongToBeatTime
+    listHowLongToBeatTime.append(request.json['data'])
+    return jsonify({"status": "finalizada"})
+
 @app.route('/getHowLongToBeatTime' , methods=['GET'])  # endpoint que da la data si es que hay
 def getHowLongToBeatTime():
-    global tareaHowLongToBeatTimeTerminada, dataHowLongToBeatTime
-    if tareaHowLongToBeatTimeTerminada==True:
-        return jsonify({"data": dataHowLongToBeatTime})
-    else:
-        return jsonify({"data": "enProceso"})
+    global listHowLongToBeatTime
+    return jsonify({"data": listHowLongToBeatTime})
 
-@socketio.on('connectHowLongToBeatTime')  # evento que activa el cliente/modulo para conectarse
-def connectHowLongToBeatTime(data):
-    global tareaHowLongToBeatTimeTerminada
-    tareaHowLongToBeatTimeTerminada = False
-    emit('onHowLongToBeatTime', data,broadcast=True)  # Activa el evento para que el cliente/modulo haga la tarea
-    # broadcast es para que emita a todos, porque si no solo emite al ultmimo que conecto
+@app.route('/getHowLongToBeatTime/<game>' , methods=['GET'])  # endpoint que da la data si es que hay
+def getHowLongToBeatTimeGame(game):
+    global listHowLongToBeatTime
+    return jsonify({"data": [x for x in listHowLongToBeatTime if x['name'] == game]})
 
-@socketio.on('finHowLongToBeatTime')  # Evento que usa el cliente/modulo para decir que termino la tarea
-def finHowLongToBeatTime(data):  #trae la data aca, no es necesario el endpoint setHowLongToBeatTime
-    global tareaHowLongToBeatTimeTerminada, dataHowLongToBeatTime
-    dataHowLongToBeatTime=data["data"]
-    tareaHowLongToBeatTimeTerminada = True
-    listHowLongToBeatTime.append(dataHowLongToBeatTime)  #se anade la data obtenida a la lista correspondiente
-    listNames.append(dataHowLongToBeatTime["name"])  # se termino tarea, agrego nombre
-    haveAllData(dataHowLongToBeatTime["name"])    #verifico si tengo todos los datos para armar la data y actualizar
+
 ############################################################################################################################################################
 
 
