@@ -67,7 +67,7 @@ namespace complements
             using (var client = new HttpClient())
             {
                 var response = await client.PostAsync(
-                    "http://localhost:5000/setComplements",
+                    "https://young-harbor-56590.herokuapp.com/setComplements",
                      new StringContent(json, Encoding.UTF8, "application/json"));
             }
         }

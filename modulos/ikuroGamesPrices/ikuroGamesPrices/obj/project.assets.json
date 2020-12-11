@@ -415,11 +415,11 @@
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "C:\\Users\\warner\\Desktop\\modulos\\ikuroGamesPrices\\ikuroGamesPrices\\ikuroGamesPrices.csproj",
+      "projectUniqueName": "C:\\Users\\warner\\Desktop\\serverBalance\\modulos\\ikuroGamesPrices\\ikuroGamesPrices\\ikuroGamesPrices.csproj",
       "projectName": "ikuroGamesPrices",
-      "projectPath": "C:\\Users\\warner\\Desktop\\modulos\\ikuroGamesPrices\\ikuroGamesPrices\\ikuroGamesPrices.csproj",
+      "projectPath": "C:\\Users\\warner\\Desktop\\serverBalance\\modulos\\ikuroGamesPrices\\ikuroGamesPrices\\ikuroGamesPrices.csproj",
       "packagesPath": "C:\\Users\\warner\\.nuget\\packages\\",
-      "outputPath": "C:\\Users\\warner\\Desktop\\modulos\\ikuroGamesPrices\\ikuroGamesPrices\\obj\\",
+      "outputPath": "C:\\Users\\warner\\Desktop\\serverBalance\\modulos\\ikuroGamesPrices\\ikuroGamesPrices\\obj\\",
       "projectStyle": "PackageReference",
       "configFilePaths": [
         "C:\\Users\\warner\\AppData\\Roaming\\NuGet\\NuGet.Config",

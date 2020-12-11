@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "dgSpecHash": "24k/E0rm8b18LgioduKPtdDXC43GD/EKEAwKzCPt3C5qsoB9M0JZN7VdM/vW1TkVOr7f0baj5q6YfR4pOEvONg==",
+  "dgSpecHash": "9z6CaKY62CXJFcntmuaZW2li4XUBcsd33oUIq243XT6TI5AoZovuRRhpqgdhDlVATPS01M1bt43+pNkY7EfmAg==",
   "success": true,
-  "projectFilePath": "C:\\Users\\warner\\Desktop\\modulos\\metacriticScores\\metacriticScores\\metacriticScores.csproj",
+  "projectFilePath": "C:\\Users\\warner\\Desktop\\serverBalance\\modulos\\metacriticScores\\metacriticScores\\metacriticScores.csproj",
   "expectedPackageFiles": [
     "C:\\Users\\warner\\.nuget\\packages\\fsharp.core\\4.5.2\\fsharp.core.4.5.2.nupkg.sha512",
     "C:\\Users\\warner\\.nuget\\packages\\htmlagilitypack\\1.11.28\\htmlagilitypack.1.11.28.nupkg.sha512",

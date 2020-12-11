@@ -1,13 +1,13 @@
-import json
-import flask_socketio
-
 import const
 from flask import Flask,request,jsonify
 from flask_socketio import SocketIO,emit
+import os
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = '12345'
-socketio = SocketIO(app, cors_allowed_origins="*")
+socketio = SocketIO(app, cors_allowed_origins="*",async_mode='eventlet')
+
+port = int(os.environ.get("PORT", 5000))
 
 finalData=[]
 
@@ -116,7 +116,6 @@ def haveAllData(name):
 
 @app.route('/')
 def index():
-    emit("pong", "Hi desde server", broadcast=True)
     return "Hola soy el server principal"
 
 ############################################################################################################################################################
@@ -402,7 +401,6 @@ def getHowLongToBeatTimeGame(game):
 
 
 ############################################################################################################################################################
-
 if __name__ == '__main__':
     #socketio.run()  #para correrlo en el server
-    socketio.run(app, debug=True,port=5000) #para correrlo local
+    socketio.run(app,debug=True,host='0.0.0.0',port=port) #para correrlo local

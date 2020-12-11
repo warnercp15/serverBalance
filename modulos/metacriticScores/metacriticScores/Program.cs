@@ -81,7 +81,7 @@ namespace metacriticScores
             using (var client = new HttpClient())
             {
                 var response = await client.PostAsync(
-                    "http://localhost:5000/setMetacritic",
+                    "https://young-harbor-56590.herokuapp.com/setMetacritic",
                      new StringContent(json, Encoding.UTF8, "application/json"));
             }
         }

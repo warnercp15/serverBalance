@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "dgSpecHash": "gr7Vq1Dlby7Kf22xwoxhcb7N5MlKaZFXbEY0JBh8ZKX3BhteqYUKXNEmOmIV0Qee7gOPGeoOMDZo5i3llusKiw==",
+  "dgSpecHash": "yYf3jzYphhn90IA//mtMymZ4ugH/NbN3U2Mz4re4aNdULAwCHanQrTSJG4UoFIH94k/uFVMsvtu8zWVPWaJ0DQ==",
   "success": true,
-  "projectFilePath": "C:\\Users\\warner\\Desktop\\modulos\\ikuroGamesPrices\\ikuroGamesPrices\\ikuroGamesPrices.csproj",
+  "projectFilePath": "C:\\Users\\warner\\Desktop\\serverBalance\\modulos\\ikuroGamesPrices\\ikuroGamesPrices\\ikuroGamesPrices.csproj",
   "expectedPackageFiles": [
     "C:\\Users\\warner\\.nuget\\packages\\fsharp.core\\4.5.2\\fsharp.core.4.5.2.nupkg.sha512",
     "C:\\Users\\warner\\.nuget\\packages\\htmlagilitypack\\1.11.28\\htmlagilitypack.1.11.28.nupkg.sha512",

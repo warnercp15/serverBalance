@@ -415,11 +415,11 @@
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "C:\\Users\\warner\\Desktop\\modulos\\metacriticScores\\metacriticScores\\metacriticScores.csproj",
+      "projectUniqueName": "C:\\Users\\warner\\Desktop\\serverBalance\\modulos\\metacriticScores\\metacriticScores\\metacriticScores.csproj",
       "projectName": "metacriticScores",
-      "projectPath": "C:\\Users\\warner\\Desktop\\modulos\\metacriticScores\\metacriticScores\\metacriticScores.csproj",
+      "projectPath": "C:\\Users\\warner\\Desktop\\serverBalance\\modulos\\metacriticScores\\metacriticScores\\metacriticScores.csproj",
       "packagesPath": "C:\\Users\\warner\\.nuget\\packages\\",
-      "outputPath": "C:\\Users\\warner\\Desktop\\modulos\\metacriticScores\\metacriticScores\\obj\\",
+      "outputPath": "C:\\Users\\warner\\Desktop\\serverBalance\\modulos\\metacriticScores\\metacriticScores\\obj\\",
       "projectStyle": "PackageReference",
       "configFilePaths": [
         "C:\\Users\\warner\\AppData\\Roaming\\NuGet\\NuGet.Config",

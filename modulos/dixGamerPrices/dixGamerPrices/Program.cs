@@ -86,7 +86,7 @@ namespace dixGamerPrices
             using (var client = new HttpClient())
             {
                 var response = await client.PostAsync(
-                    "http://localhost:5000/setDixGamerPrice",
+                    "https://young-harbor-56590.herokuapp.com/setDixGamerPrice",
                      new StringContent(json, Encoding.UTF8, "application/json"));
             }
         }

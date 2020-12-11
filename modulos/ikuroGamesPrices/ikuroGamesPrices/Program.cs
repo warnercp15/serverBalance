@@ -119,7 +119,7 @@ namespace ikuroGamesPrices
             using (var client = new HttpClient())
             {
                 var response = await client.PostAsync(
-                    "http://localhost:5000/setIkuroGamePrice",
+                    "https://young-harbor-56590.herokuapp.com/setIkuroGamePrice",
                      new StringContent(json, Encoding.UTF8, "application/json"));
             }
         }

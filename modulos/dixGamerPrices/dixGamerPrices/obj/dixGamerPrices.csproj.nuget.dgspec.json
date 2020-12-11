@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "C:\\Users\\warner\\Desktop\\modulos\\dixGamerPrices\\dixGamerPrices\\dixGamerPrices.csproj": {}
+    "C:\\Users\\warner\\Desktop\\serverBalance\\modulos\\dixGamerPrices\\dixGamerPrices\\dixGamerPrices.csproj": {}
   },
   "projects": {
-    "C:\\Users\\warner\\Desktop\\modulos\\dixGamerPrices\\dixGamerPrices\\dixGamerPrices.csproj": {
+    "C:\\Users\\warner\\Desktop\\serverBalance\\modulos\\dixGamerPrices\\dixGamerPrices\\dixGamerPrices.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\warner\\Desktop\\modulos\\dixGamerPrices\\dixGamerPrices\\dixGamerPrices.csproj",
+        "projectUniqueName": "C:\\Users\\warner\\Desktop\\serverBalance\\modulos\\dixGamerPrices\\dixGamerPrices\\dixGamerPrices.csproj",
         "projectName": "dixGamerPrices",
-        "projectPath": "C:\\Users\\warner\\Desktop\\modulos\\dixGamerPrices\\dixGamerPrices\\dixGamerPrices.csproj",
+        "projectPath": "C:\\Users\\warner\\Desktop\\serverBalance\\modulos\\dixGamerPrices\\dixGamerPrices\\dixGamerPrices.csproj",
         "packagesPath": "C:\\Users\\warner\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\warner\\Desktop\\modulos\\dixGamerPrices\\dixGamerPrices\\obj\\",
+        "outputPath": "C:\\Users\\warner\\Desktop\\serverBalance\\modulos\\dixGamerPrices\\dixGamerPrices\\obj\\",
         "projectStyle": "PackageReference",
         "configFilePaths": [
           "C:\\Users\\warner\\AppData\\Roaming\\NuGet\\NuGet.Config",

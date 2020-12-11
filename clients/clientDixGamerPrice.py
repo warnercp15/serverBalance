@@ -14,7 +14,7 @@ def tarea(args):
     process.wait()  #espera que termine el proceso
     socketIO.emit('endScrape', (const.DIX_SOCKET_TYPE, args))  #emite evento para decirle al server que ya termino la tarea
 
-socketIO = SocketIO("http://localhost",5000) #se conecta al server
+socketIO = SocketIO("https://young-harbor-56590.herokuapp.com") #se conecta al server
 socketIO.on('start-' + const.DIX_SOCKET_TYPE, tarea)  # define que hacer cuando se actice el evento
 
 socketIO.emit('connect-socket', const.DIX_SOCKET_TYPE)

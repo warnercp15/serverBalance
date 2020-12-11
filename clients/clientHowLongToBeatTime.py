@@ -43,7 +43,7 @@ def tarea(args):
     except ValueError as e:
         print(e)
 
-socketIO = SocketIO("http://localhost",5000) #se conecta al server
+socketIO = SocketIO("https://young-harbor-56590.herokuapp.com") #se conecta al server
 socketIO.on('start-' + const.HLTB_SOCKET_TYPE, tarea)  # define que hacer cuando se actice el evento
 
 socketIO.emit('connect-socket', const.HLTB_SOCKET_TYPE)
