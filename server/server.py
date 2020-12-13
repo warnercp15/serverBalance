@@ -56,12 +56,10 @@ def haveAllData(name):
 
         print('len(listNames): ' + str(len(listNames)))
         print('len(const.GAMES): ' + str(len(const.GAMES) * 5))
-        resNames = [x for x in listNames if
-                    x == name]  # se creo un lista con los nombres porque es mas rapido que recorrer que con los objetos
+        resNames = [x for x in listNames if x == name]  # se creo un lista con los nombres porque es mas rapido que recorrer que con los objetos
 
         if len(resNames) == 5:
-            print()
-            print('Starting data parsing')
+            print('\nStarting data parsing')
             # cuando encuentre el nombre 5 veces quiere decir que tiene todos los datos
 
             resComplement = [x for x in listComplement if x["name"] == name]
@@ -241,7 +239,6 @@ def endScrape(data):
     listNames.append(data[1])  # se termino tarea, agrego nombre
     print(data[0].upper() + '------------ Socket ' + request.sid + ' ended processing ' + data[1])
 
-
     if data[0] == const.HLTB_SOCKET_TYPE:
         if len(data) > 2:
             listHowLongToBeatTime.append(data[2]['data'])
@@ -252,9 +249,8 @@ def endScrape(data):
             socketio.emit('start-' + data[0], [requestStack[const.HLTB_SOCKET_TYPE].pop(0), const.HLTB_SOCKET_TYPE], room=request.sid)
             return
 
+
     elif data[0] == const.METACRITIC_SOCKET_TYPE:
-        if len(data) > 2:
-            listMetacriticScore.append(data[2]['data'])
 
         haveAllData(data[1])  # se termino tarea, agrego nombre
 
@@ -262,9 +258,8 @@ def endScrape(data):
             socketio.emit('start-' + const.METACRITIC_SOCKET_TYPE,[requestStack[const.METACRITIC_SOCKET_TYPE].pop(0), const.METACRITIC_SOCKET_TYPE],room=request.sid)
             return
 
+
     elif data[0] == const.DIX_SOCKET_TYPE:
-        if len(data) > 2:
-            listDixGamerPrice.append(data[2]['data'])
 
         haveAllData(data[1])  # se termino tarea, agrego nombre
 
@@ -272,9 +267,8 @@ def endScrape(data):
             socketio.emit('start-' + const.DIX_SOCKET_TYPE,[requestStack[const.DIX_SOCKET_TYPE].pop(0), const.DIX_SOCKET_TYPE],room=request.sid)
             return
 
+
     elif data[0] == const.IKURO_SOCKET_TYPE:
-        if len(data) > 2:
-            listIkuroGamePrice.append(data[2]['data'])
 
         haveAllData(data[1])  # se termino tarea, agrego nombre
 
@@ -283,40 +277,12 @@ def endScrape(data):
             return
 
     elif data[0] == const.COMPLEMENTS_SOCKET_TYPE:
-        if len(data) > 2:
-            listComplement.append(data[2]['data'])
 
         haveAllData(data[1])  # se termino tarea, agrego nombre
 
         if len(requestStack[const.COMPLEMENTS_SOCKET_TYPE]) > 0:
             socketio.emit('start-' + const.COMPLEMENTS_SOCKET_TYPE,[requestStack[const.COMPLEMENTS_SOCKET_TYPE].pop(0), const.COMPLEMENTS_SOCKET_TYPE],room=request.sid)
             return
-
-    #si hay mas tareas hacerlas, sea el tipo que sea
-    if len(requestStack[const.HLTB_SOCKET_TYPE]) > 0:
-        # print('------------ Theres processes in queue for ' + data[0] + ', socket ' + request.sid + ' will continue with next in queue ')
-        socketio.emit('start-' + const.HLTB_SOCKET_TYPE, [requestStack[const.HLTB_SOCKET_TYPE].pop(0), const.HLTB_SOCKET_TYPE], room=request.sid)
-        return
-
-    elif len(requestStack[const.COMPLEMENTS_SOCKET_TYPE]) > 0:
-        print('------------ Theres processes in queue for ' + data[0] + ', socket ' + request.sid + ' will continue with next in queue ')
-        socketio.emit('start-' + const.COMPLEMENTS_SOCKET_TYPE,[requestStack[const.COMPLEMENTS_SOCKET_TYPE].pop(0), const.COMPLEMENTS_SOCKET_TYPE],room=request.sid)
-        return
-
-    elif len(requestStack[const.DIX_SOCKET_TYPE]) > 0:
-        print('------------ Theres processes in queue for ' + data[0] + ', socket ' + request.sid + ' will continue with next in queue ')
-        socketio.emit('start-' + const.DIX_SOCKET_TYPE,[requestStack[const.DIX_SOCKET_TYPE].pop(0), const.DIX_SOCKET_TYPE], room=request.sid)
-        return
-
-    elif len(requestStack[const.METACRITIC_SOCKET_TYPE]) > 0:
-        print('------------ Theres processes in queue for ' + data[0] + ', socket ' + request.sid + ' will continue with next in queue ')
-        socketio.emit('start-' + const.METACRITIC_SOCKET_TYPE,[requestStack[const.METACRITIC_SOCKET_TYPE].pop(0), const.METACRITIC_SOCKET_TYPE],room=request.sid)
-        return
-
-    elif len(requestStack[const.IKURO_SOCKET_TYPE]) > 0:
-        print('------------ Theres processes in queue for ' + data[0] + ', socket ' + request.sid + ' will continue with next in queue ')
-        socketio.emit('start-' + const.IKURO_SOCKET_TYPE,[requestStack[const.IKURO_SOCKET_TYPE].pop(0), const.IKURO_SOCKET_TYPE], room=request.sid)
-        return
 
     print(data[0].upper() + '-------- No more requests in queue')
     busySockets[data[0]].remove(request.sid)
@@ -355,6 +321,7 @@ def startAll():
     listComplement = []
     listHowLongToBeatTime = []
     listNames = []
+    finalData = []
 
     requestStack = {
         const.METACRITIC_SOCKET_TYPE: [],
