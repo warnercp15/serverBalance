@@ -32,9 +32,9 @@ def tarea(args):
     global name
     print("Proceso HowLongToBeat")
     try:
-        print('Iniciando tarea con ' + args.replace(" ","-"))
-        name=args
-        results = HowLongToBeat(0).search(args)
+        print('Iniciando tarea con ' + args[0].replace(" ","-"))
+        name=args[0] #es necesario para el metodo de arriba
+        results = HowLongToBeat(0).search(name)
         result = max(results, key=lambda element: element.similarity).gameplay_main
         if result != -1:
             send_json(format_result(result))  # Da formato al valor obtenido, intercambia '½' por '.30'
@@ -43,7 +43,7 @@ def tarea(args):
     except ValueError as e:
         print(e)
 
-socketIO = SocketIO("https://young-harbor-56590.herokuapp.com") #se conecta al server
+socketIO = SocketIO("http://young-harbor-56590.herokuapp.com") #se conecta al server
 socketIO.on('start-' + const.HLTB_SOCKET_TYPE, tarea)  # define que hacer cuando se actice el evento
 
 socketIO.emit('connect-socket', const.HLTB_SOCKET_TYPE)

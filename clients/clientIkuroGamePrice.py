@@ -7,14 +7,14 @@ ruta=os.path.join(os.path.dirname(__file__), "..\\modulos\\ikuroGamesPrices\\iku
 #ejecutar el proyecto para tener el exe mas actualizado en caso de que hayan cambios
 
 def tarea(args):
-    print('Iniciando tarea con ' + args.replace(" ","-"))
     global ruta
-    params=args.replace(" ","-")  #por si el nombre lleva espacios no lo entienda como mas de un parametro, en c# se acomoda!
+    params=args[0].replace(" ","-")  #por si el nombre lleva espacios no lo entienda como mas de un parametro, en c# se acomoda!
+    print('Iniciando tarea con ' + params)
     process = subprocess.Popen(ruta+" "+params, shell=True)  #inicia proceso, se ejecuta en esta misma consola
     process.wait()  #espera que termine el proceso
-    socketIO.emit('endScrape', (const.IKURO_SOCKET_TYPE, args))  #emite evento para decirle al server que ya termino la tarea
+    socketIO.emit('endScrape', (const.IKURO_SOCKET_TYPE, args[0]))  #emite evento para decirle al server que ya termino la tarea
 
-socketIO = SocketIO("https://young-harbor-56590.herokuapp.com") #se conecta al server
+socketIO = SocketIO("http://young-harbor-56590.herokuapp.com") #se conecta al server
 socketIO.on('start-' + const.IKURO_SOCKET_TYPE, tarea)  # define que hacer cuando se actice el evento
 socketIO.emit('connect-socket', const.IKURO_SOCKET_TYPE)
 
