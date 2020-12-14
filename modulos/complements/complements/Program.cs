@@ -22,7 +22,7 @@ namespace complements
             doc = oWeb.Load(url);
             foreach (var Nodo in doc.DocumentNode.CssSelect("img.wp-post-image"))
             {
-                imageUrl=Nodo.GetAttributeValue("data-src");
+                imageUrl=Nodo.GetAttributeValue("src");
             }
             return imageUrl;
         }
