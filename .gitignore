@@ -4,3 +4,5 @@ venv/
 server/venv
 .idea
 __pycache__
+clients/__pycache__
+clients/.idea

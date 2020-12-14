@@ -2,6 +2,9 @@ from flask import Flask, request, jsonify
 from flask_socketio import SocketIO
 import os
 import const
+from email.mime.multipart import MIMEMultipart
+import smtplib
+from email.mime.text import MIMEText
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = '12345'
@@ -9,6 +12,8 @@ socketio = SocketIO(app, cors_allowed_origins="*", async_mode="eventlet", always
 port = int(os.environ.get("PORT", 5000))
 
 finalData = []
+
+listClients=[]
 
 requestStack = {
     const.METACRITIC_SOCKET_TYPE: [],
@@ -111,6 +116,8 @@ def haveAllData(name):
             socketio.emit('onNewData', jsonData, broadcast=True)  # emite nuevo juego
 
             if len(finalData) == len(const.GAMES):
+                for client in listClients:
+                    sendMail(client)
                 finalData = []
                 socketio.emit('end', [], broadcast=True)  # emite nuevo juego
 
@@ -159,6 +166,45 @@ def disconnectClient(id):
     if id in availableSockets[const.HLTB_SOCKET_TYPE]:
         availableSockets[const.HLTB_SOCKET_TYPE].remove(id)
 
+
+
+def sendMail(client):
+
+    msg = MIMEMultipart()
+
+    password = "operativosso2020"
+    msg['From'] = "operativos89@gmail.com"
+    msg['Subject'] = "WebScrapingGames"
+
+    html = """\
+        <h1>Hola, somos WebScrapingGames!</h1>
+        </br>    
+        <h2>Nuestros juegos han sido actualizados!</h2>   
+        <h2>Visita nuestro sitio y checa los descuentos!</h2>
+        </br>
+        <a href="https://webscrapinggames.web.app"><h3>Da click acá</h3></a>
+        <img src="https://raw.githubusercontent.com/warnercp15/webScrapingGames/main/assets/resultadoWeb.png" style="width: 100%;margin:'auto'">
+    """
+    msgHtml = MIMEText(html, 'html')
+    msg.attach(msgHtml)
+    server = smtplib.SMTP('smtp.gmail.com: 587')
+    server.starttls()
+    server.login(msg['From'], password)
+
+    msg['To'] = client
+    server.sendmail(msg['From'], msg['To'], msg.as_string())
+    print("Mensaje enviado a %s" % (client))
+
+    server.quit()
+
+@socketio.on('setMail')
+def setMail(mail):
+    try:
+        if not mail in listClients:
+            listClients.append(mail)
+            print("Gmail registred")
+    except ValueError as err:
+        print(err)
 
 @socketio.on('connect')
 def test_connect():
