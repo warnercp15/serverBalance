@@ -3,7 +3,7 @@ import const
 import subprocess
 from socketIO_client import SocketIO
 
-ruta=os.path.join(os.path.dirname(__file__), "..\\modulos\\complements\\complements\\bin\\Debug\\netcoreapp3.1\\complements.exe")
+ruta=os.path.join(os.path.dirname(__file__), "..\\modules\\complements\\complements\\bin\\Debug\\netcoreapp3.1\\complements.exe")
 #ejecutar el proyecto para tener el exe mas actualizado en caso de que hayan cambios
 
 def tarea(args):

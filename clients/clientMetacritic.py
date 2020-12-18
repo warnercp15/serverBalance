@@ -3,7 +3,7 @@ import const
 import subprocess
 from socketIO_client import SocketIO
 
-ruta=os.path.join(os.path.dirname(__file__), "..\\modulos\\metacriticScores\\metacriticScores\\bin\\Debug\\netcoreapp3.1\\metacriticScores.exe")
+ruta=os.path.join(os.path.dirname(__file__), "..\\modules\\metacriticScores\\metacriticScores\\bin\\Debug\\netcoreapp3.1\\metacriticScores.exe")
 #ejecutar el proyecto para tener el exe mas actualizado en caso de que hayan cambios
 
 def tarea(args):
