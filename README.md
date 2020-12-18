@@ -1,12 +1,13 @@
 # Server Balance
 
+**Enlace de la aplicación Web: https://webscrapinggames.web.app/**
+
 El objetivo del proyecto consiste en hacer uso de conceptos de sistemas distribuidos a través de orquestación de nodos y servidores de colas. Por lo cual se tomó como refencia el proyecto anterior: https://github.com/warnercp15/webScrapingGames
 
 **Resultado**
 
 ![vistaWeb](<./assets/result.jpeg>)
 
-**Enlace de la aplicación Web: https://webscrapinggames.web.app/**
 
 En esta versión podemos encontrar los diferentes tipos de Scraping de forma modularizada e independiente, esto pues ahora  realizarán tareas específicas. Puedes ver los diferentes modulos en la carpeta 'modules', estos de igual manera están desarrollados en su mayoría en C#, pero ejecutados ahora desde clientes de SocketIO realizados en Python. La comunidación entre el servidor y los clientes se realiza por medio Sockets para aprovechar los eventos en tiempo real.
 
