@@ -10,7 +10,7 @@ El objetivo del proyecto consiste en hacer uso de conceptos de sistemas distribu
 
 En esta versión podemos encontrar los diferentes tipos de Scraping de forma modularizada e independiente, esto pues ahora  realizarán tareas específicas. Puedes ver los diferentes modulos en la carpeta 'modules', estos de igual manera están desarrollados en su mayoría en C#, pero ejecutados ahora desde clientes de SocketIO realizados en Python. La comunidación entre el servidor y los clientes se realiza por medio Sockets para aprovechar los eventos en tiempo real.
 
-** El proyecto funciona de la siguiente manera: **
+**El proyecto funciona de la siguiente manera:**
 
 1. El servidor es el encargado de administrar las conexiones (clientes) y asignar tareas a quien esté disponible.
 
